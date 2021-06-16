@@ -1,426 +1,936 @@
-<html>
+<!DOCTYPE html>
+<html lang="en">
+
 <head>
-  <meta charset="utf-8" />
-  <meta http-equiv="X-UA-Compatible" content="IE=edge">
-  <title>Netflix</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <script defer src="https://use.fontawesome.com/releases/v5.1.0/js/all.js" integrity="sha384-3LK/3kTpDE/Pkp8gTNp2gR/2gOiwQ6QaO7Td0zV76UFJVhqLl4Vl3KL1We6q6wR9" crossorigin="anonymous"></script>
-  <script src="main.css"></script>
-  <style>
-
-/* CSS VARIABLES */
-:root {
-  --primary: #000000;
-  --light: #f3f3f3;
-  --dark: 	#686868;
-}
-
-html, body {
-  width: 100vw;
-  min-height: 100vh;
-  margin: 0;
-  padding: 0;
-  background-color: var(--primary);
-  color: var(--light);
-  font-family: Arial, Helvetica, sans-serif;
-  box-sizing: border-box;
-  line-height: 1.4;
-}
-
-img {
-  max-width: 100%;
-}
-
-h1 {
-  padding-top: 60px;  
-}
-
-.wrapper {
-  margin: 0;
-  padding: 0;
-}
-
-/* HEADER */
-header {
-  padding: 20px 20px 0 20px;
-  position: fixed;
-  top: 0;
-  display: grid;  
-  grid-gap:5px;
-  grid-template-columns: 1fr 4fr 1fr;
-  grid-template-areas: 
-   "nt mn mn sb . . . "; 
-  background-color: var(--primary);
-  width: 100%;
-  margin-bottom: 0px;  
-}
-
-.netflixLogo {
-  grid-area: nt;
-  object-fit: cover;
-  width: 100px;
-  max-height: 100%;
-  
-  padding-left: 30px;
-  padding-top: 0px;  
-}
-
-.netflixLogo img {  
-  height: 35px;     
-}
-
-#logo {
-  color: #E50914;  
-  margin: 0; 
-  padding: 0; 
-}
-
-
-.main-nav {
-  grid-area: mn;
-  padding: 0 30px 0 20px;
-}
-
-.main-nav a {
-  color: var(--light);
-  text-decoration: none;
-  margin: 5px;  
-}
-
-.main-nav a:hover {
-  color: var(--dark);
-}
-
-.sub-nav {
-  grid-area: sb;
-  padding: 0 40px 0 40px;
-}
-
-.sub-nav a {
-  color: var(--light);
-  text-decoration: none;
-  margin: 5px;
-}
-
-.sub-nav a:hover {
-  color: var(--dark);
-}
-
-
-/* MAIN CONTIANER */
-.main-container {
-  padding: 50px;
-}
-
-.box {
-  display: grid;
-  grid-gap: 20px;
-  grid-template-columns: repeat(6, minmax(100px, 1fr));
-}
-
-.box a {
-  transition: transform .3s;  
-}
-
-.box a:hover {
-  transition: transform .3s;
-  -ms-transform: scale(1.4);
-  -webkit-transform: scale(1.4);  
-  transform: scale(1.4);
-}
-
-.box img {
-  border-radius: 2px;
-}
-
-/* LINKS */
-.link {
-  padding: 50px;
-}
-
-.sub-links ul {
-  list-style: none;
-  padding: 0;
-  display: grid;
-  grid-gap: 20px;
-  grid-template-columns: repeat(4, 1fr);
-}
-
-.sub-links a {
-  color: var(--dark);
-  text-decoration: none;
-}
-
-.sub-links a:hover {
-  color: var(--dark);
-  text-decoration: underline;
-}
-
-.logos a{
-  padding: 10px;
-}
-
-.logo {
-  color: var(--dark);
-}
-
-
-/* FOOTER */
-footer {
-  padding: 20px;
-  text-align: center;
-  color: var(--dark);
-  margin: 10px;
-}
-
-/* MEDIA QUERIES */
-
-@media(max-width: 900px) {
-
-  header {
-    display: grid;
-    grid-gap: 20px;
-    grid-template-columns: repeat(2, 1fr);
-    grid-template-areas: 
-    "nt nt nt  .  .  . sb . . . "
-    "mn mn mn mn mn mn  mn mn mn mn";
-  }
-
-  .box {
-    display: grid;
-    grid-gap: 20px;
-    grid-template-columns: repeat(4, minmax(100px, 1fr));
-  }
-
-}
-
-@media(max-width: 700px) {
-
-  header {
-    display: grid;
-    grid-gap: 20px;
-    grid-template-columns: repeat(2, 1fr);
-    grid-template-areas: 
-    "nt nt nt  .  .  . sb . . . "
-    "mn mn mn mn mn mn  mn mn mn mn";
-  }
-
-  .box {
-    display: grid;
-    grid-gap: 20px;
-    grid-template-columns: repeat(3, minmax(100px, 1fr));
-  }
-
-  .sub-links ul {
-    display: grid;
-    grid-gap: 20px;
-    grid-template-columns: repeat(3, 1fr);
-  }
-   
-}
-
-@media(max-width: 500px) {
-
-  .wrapper {
-    font-size: 15px;
-  }
-
-  header {
-    margin: 0;
-    padding: 20px 0 0 0;
-    position: static;
-    display: grid;
-    grid-gap: 20px;
-    grid-template-columns: repeat(1, 1fr);
-    grid-template-areas: 
-    "nt"    
-    "mn"
-    "sb";
-    text-align: center;
-  }
-
-  .netflixLogo {
-    max-width: 100%;
-    margin: auto;
-    padding-right: 20px;
-  }
-
-  .main-nav {
-    display: grid;
-    grid-gap: 0px;
-    grid-template-columns: repeat(1, 1fr);
-    text-align: center;
-  }
-
-  h1 {
-    text-align: center;
-    font-size: 18px;
-  }
-
- 
-
-  .box {
-    display: grid;
-    grid-gap: 2px;
-    grid-template-columns: repeat(1, 1fr);
-    text-align: left;    
-  }
-
-  .box a:hover {
-    transition: transform .3s;
-    -ms-transform: scale(1);
-    -webkit-transform: scale(1);  
-    transform: scale(1.2);
-  }
-
-  .logos {
-    display: grid;
-    grid-gap: 20px;
-    grid-template-columns: repeat(2, 1fr);
-    text-align: center;
-  }
-
-  .sub-links ul {
-    display: grid;
-    grid-gap: 20px;
-    grid-template-columns: repeat(1, 1fr);
-    text-align: center;
-    font-size: 15px;
-  }
-
-  
-
-  
-   
-}
-
-  </style>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+    <meta name="author" content="INSPIRO" />
+    <meta name="description" content="Themeforest Template Polo, html template">
+    <link rel="icon" type="image/png" href="images/favicon.png">   
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <!-- Document title -->
+    <title>KidDo | For your enjoyment</title>
+    <!-- Stylesheets & Fonts -->
+    <link href="css/plugins.css" rel="stylesheet">
+    <link href="css/style.css" rel="stylesheet">
 </head>
+
 <body>
-  <div class="wrapper">
-
-    <!-- HEADER -->
-    <header>
-      <div class="netflixLogo">
-        <a id="logo" href="#home"><img src="https://github.com/carlosavilae/Netflix-Clone/blob/master/img/logo.PNG?raw=true" alt="Logo Image"></a>
-      </div>      
-      <nav class="main-nav">                
-        <a href="#home">Үндсэн булан</a>
-        <a href="#movies">Бичлэгүүд</a>
-        <a href="https://dorjzodovsuren.com"><b>БИД ХЭН БЭ?</b></a>    
-      </nav>
-      <nav class="sub-nav">
-        <a href="#"><i class="fas fa-search sub-nav-logo"></i></a>
-        <a href="#"><i class="fas fa-bell sub-nav-logo"></i></a>
-        <a href="#">Account</a>        
-      </nav>      
-    </header>
-    <!-- END OF HEADER -->
-    
-    <!-- MAIN CONTAINER -->
-    <section class="main-container" >
-      <div class="location" id="home">
-          <h1 id="home">Шинэ дугаарууд</h1>
-          <div class="box">
-            <a href=""><img src="https://github.com/carlosavilae/Netflix-Clone/blob/master/img/p1.PNG?raw=true" alt=""></a>
-            <a href=""><img src="https://github.com/carlosavilae/Netflix-Clone/blob/master/img/p2.PNG?raw=true" alt=""></a>
-            <a href=""><img src="https://github.com/carlosavilae/Netflix-Clone/blob/master/img/p3.PNG?raw=true" alt=""></a>
-            <a href=""><img src="https://github.com/carlosavilae/Netflix-Clone/blob/master/img/p4.PNG?raw=true" alt=""></a>
-            <a href=""><img src="https://github.com/carlosavilae/Netflix-Clone/blob/master/img/p5.PNG?raw=true" alt=""></a>
-            <a href=""><img src="https://github.com/carlosavilae/Netflix-Clone/blob/master/img/p6.PNG?raw=true" alt=""></a>
-    
-            <a href=""><img src="https://github.com/carlosavilae/Netflix-Clone/blob/master/img/p7.PNG?raw=true" alt=""></a>
-            <a href=""><img src="https://github.com/carlosavilae/Netflix-Clone/blob/master/img/p8.PNG?raw=true" alt=""></a>
-            <a href=""><img src="https://github.com/carlosavilae/Netflix-Clone/blob/master/img/p9.PNG?raw=true" alt=""></a>
-            <a href=""><img src="https://github.com/carlosavilae/Netflix-Clone/blob/master/img/p10.PNG?raw=true" alt=""></a>
-            <a href=""><img src="https://github.com/carlosavilae/Netflix-Clone/blob/master/img/p11.PNG?raw=true" alt=""></a>
-            <a href=""><img src="https://github.com/carlosavilae/Netflix-Clone/blob/master/img/p12.PNG?raw=true" alt=""></a>        
-          </div>
-      </div>
-      
-
-      <h1 id="myList">Эрэлттэй байгаа дугаарууд</h1>
-      <div class="box">
-        <a href=""><img src="https://github.com/carlosavilae/Netflix-Clone/blob/master/img/t1.PNG?raw=true" alt=""></a>
-        <a href=""><img src="https://github.com/carlosavilae/Netflix-Clone/blob/master/img/t2.PNG?raw=true" alt=""></a>
-        <a href=""><img src="https://github.com/carlosavilae/Netflix-Clone/blob/master/img/t3.PNG?raw=true" alt=""></a>
-        <a href=""><img src="https://github.com/carlosavilae/Netflix-Clone/blob/master/img/t4.PNG?raw=true" alt=""></a>
-        <a href=""><img src="https://github.com/carlosavilae/Netflix-Clone/blob/master/img/t5.PNG?raw=true" alt=""></a>
-        <a href=""><img src="https://github.com/carlosavilae/Netflix-Clone/blob/master/img/t6.PNG?raw=true" alt=""></a>                  
-      </div>
-      
-      <h1 id="tvShows">Бичлэгүүд</h1>
-      <div class="box">
-        <a href=""><img src="https://github.com/carlosavilae/Netflix-Clone/blob/master/img/tv1.PNG?raw=true" alt=""></a>
-        <a href=""><img src="https://github.com/carlosavilae/Netflix-Clone/blob/master/img/tv2.PNG?raw=true" alt=""></a>
-        <a href=""><img src="https://github.com/carlosavilae/Netflix-Clone/blob/master/img/tv3.PNG?raw=true" alt=""></a>
-        <a href=""><img src="https://github.com/carlosavilae/Netflix-Clone/blob/master/img/tv4.PNG?raw=true" alt=""></a>
-        <a href=""><img src="https://github.com/carlosavilae/Netflix-Clone/blob/master/img/tv5.PNG?raw=true" alt=""></a>
-        <a href=""><img src="https://github.com/carlosavilae/Netflix-Clone/blob/master/img/tv6.PNG?raw=true" alt=""></a>
-
-        <a href=""><img src="https://github.com/carlosavilae/Netflix-Clone/blob/master/img/tv7.PNG?raw=true" alt=""></a>
-        <a href=""><img src="https://github.com/carlosavilae/Netflix-Clone/blob/master/img/tv8.PNG?raw=true" alt=""></a>
-        <a href=""><img src="https://github.com/carlosavilae/Netflix-Clone/blob/master/img/tv9.PNG?raw=true" alt=""></a>
-        <a href=""><img src="https://github.com/carlosavilae/Netflix-Clone/blob/master/img/tv10.PNG?raw=true" alt=""></a>
-        <a href=""><img src="https://github.com/carlosavilae/Netflix-Clone/blob/master/img/tv11.PNG?raw=true" alt=""></a>
-        <a href=""><img src="https://github.com/carlosavilae/Netflix-Clone/blob/master/img/tv12.PNG?raw=true" alt=""></a>              
-      </div>
-      
-
-      <h1 id="movies">Blockbuster Action & Adventure</h1>
-      <div class="box">
-        <a href=""><img src="https://github.com/carlosavilae/Netflix-Clone/blob/master/img/m1.PNG?raw=true" alt=""></a>
-        <a href=""><img src="https://github.com/carlosavilae/Netflix-Clone/blob/master/img/m2.PNG?raw=true" alt=""></a>
-        <a href=""><img src="https://github.com/carlosavilae/Netflix-Clone/blob/master/img/m3.PNG?raw=true" alt=""></a>
-        <a href=""><img src="https://github.com/carlosavilae/Netflix-Clone/blob/master/img/m4.PNG?raw=true" alt=""></a>
-        <a href=""><img src="https://github.com/carlosavilae/Netflix-Clone/blob/master/img/m5.PNG?raw=true" alt=""></a>
-        <a href=""><img src="https://github.com/carlosavilae/Netflix-Clone/blob/master/img/m6.PNG?raw=true" alt=""></a>                
-      </div>
-
-      <h1 id="originals">Netflix Originals</h1>
-      <div class="box">
-        <a href=""><img src="https://github.com/carlosavilae/Netflix-Clone/blob/master/img/o1.PNG?raw=true" alt=""></a>
-        <a href=""><img src="https://github.com/carlosavilae/Netflix-Clone/blob/master/img/o2.PNG?raw=true" alt=""></a>
-        <a href=""><img src="https://github.com/carlosavilae/Netflix-Clone/blob/master/img/o3.PNG?raw=true" alt=""></a>
-        <a href=""><img src="https://github.com/carlosavilae/Netflix-Clone/blob/master/img/o4.PNG?raw=true" alt=""></a>
-        <a href=""><img src="https://github.com/carlosavilae/Netflix-Clone/blob/master/img/o5.PNG?raw=true" alt=""></a>
-        <a href=""><img src="https://github.com/carlosavilae/Netflix-Clone/blob/master/img/o6.PNG?raw=true" alt=""></a>                
-      </div>
-     
-    <!-- END OF MAIN CONTAINER -->
-
-    <!-- LINKS -->
-    <section class="link">
-      <div class="logos">
-        <a href="#"><i class="fab fa-facebook-square fa-2x logo"></i></a>
-        <a href="#"><i class="fab fa-instagram fa-2x logo"></i></a>
-        <a href="#"><i class="fab fa-twitter fa-2x logo"></i></a>
-        <a href="#"><i class="fab fa-youtube fa-2x logo"></i></a>
-      </div>
-      <div class="sub-links">
-        <ul>
-          <li><a href="#">Audio and Subtitles</a></li>
-          <li><a href="#">Audio Description</a></li>
-          <li><a href="#">Help Center</a></li>
-          <li><a href="#">Gift Cards</a></li>
-          <li><a href="#">Media Center</a></li>
-          <li><a href="#">Investor Relations</a></li>
-          <li><a href="#">Jobs</a></li>
-          <li><a href="#">Terms of Use</a></li>
-          <li><a href="#">Privacy</a></li>
-          <li><a href="#">Legal Notices</a></li>
-          <li><a href="#">Corporate Information</a></li>
-          <li><a href="#">Contact Us</a></li>
-        </ul>
-      </div>
-    </section>
-    <!-- END OF LINKS -->
-
-    <!-- FOOTER -->
-    <footer>
-      <p>&copy 1997-2018 Netflix, Inc.</p>
-      <p>Carlos Avila &copy 2018</p>
-    </footer>
-  </div>
+    <!-- Body Inner -->
+    <div class="body-inner">
+        <!-- Header -->
+        <header id="header" data-transparent="true" data-fullwidth="true" class="dark submenu-light">
+            <div class="header-inner">
+                <div class="container">
+                    <!--Logo-->
+                    <div id="logo">
+                        <a href="index.html">
+                            <span class="logo-default">KidDo</span>
+                            <span class="logo-dark">KidDo</span>
+                        </a>
+                    </div>
+                    <!--End: Logo-->
+                    <!-- Search -->
+                    <div id="search"><a id="btn-search-close" class="btn-search-close" aria-label="Close search form"><i class="icon-x"></i></a>
+                        <form class="search-form" action="search-results-page.html" method="get">
+                            <input class="form-control" name="q" type="text" placeholder="Type & Search..." />
+                            <span class="text-muted">Start typing & press "Enter" or "ESC" to close</span>
+                        </form>
+                    </div>
+                    <!-- end: search -->
+                    <!--Header Extras-->
+                    <div class="header-extras">
+                        <ul>
+                            <li>
+                                <a id="btn-search" href="#"> <i class="icon-search"></i></a>
+                            </li>
+                            <li>
+                                <div class="p-dropdown">
+                                    <a href="#"><i class="icon-globe"></i><span>MN</span></a>
+                                    <ul class="p-dropdown-content">
+                                        <li><a href="#">Монгол</a></li>
+                                        <li><a href="#">English</a></li>
+                                    </ul>
+                                </div>
+                            </li>
+                        </ul>
+                    </div>
+                    <!--end: Header Extras-->
+                    <!--Navigation Resposnive Trigger-->
+                    <div id="mainMenu-trigger">
+                        <a class="lines-button x"><span class="lines"></span></a>
+                    </div>
+                    <!--end: Navigation Resposnive Trigger-->
+                    <!--Navigation-->
+                    <div id="mainMenu">
+                        <div class="container">
+                            <nav>
+                                <ul>
+                                    <li><a href="index.html">Үндсэн хуудас</a></li>
+                                    <li class="dropdown"><a href="#">Бичлэгүүд</a>
+                                        <ul class="dropdown-menu">
+                                            <li class="dropdown-submenu"><a href="#">KidDo-ийн найзууд</a>
+                                                <ul class="dropdown-menu">
+                                                    <li><a href="header-topbar.html">Light</a></li>
+                                                    <li><a href="header-topbar-dark.html">Dark</a></li>
+                                                    <li><a href="header-topbar-transparent.html">Transparent</a></li>
+                                                    <li><a href="header-topbar-colored.html">Colored</a></li>
+                                                    <li><a href="header-topbar-fullwidth.html">Fullwidth</a></li>
+                                                </ul>
+                                            </li>
+                                            <li class="dropdown-submenu"><a href="#">Header</a>
+                                                <ul class="dropdown-menu">
+                                                    <li><a href="header.html">Light</a></li>
+                                                    <li><a href="header-dark.html">Dark</a></li>
+                                                    <li><a href="header-transparent.html">Transparent</a></li>
+                                                    <li><a href="header-fullwidth.html">Fullwidth</a></li>
+                                                    <li class="dropdown-submenu"><a href="#">Modern</a>
+                                                        <ul class="dropdown-menu">
+                                                            <li><a href="header-modern.html">Light</a></li>
+                                                            <li><a href="header-modern-dark.html">Dark</a></li>
+                                                            <li><a href="header-modern-transparent.html">Transparent</a></li>
+                                                        </ul>
+                                                    </li>
+                                                    <li><a href="header-mini.html">Mini</a></li>
+                                                    <li><a href="header-alternative.html">Alternative</a></li>
+                                                    <li><a href="header-always-fixed.html">Always Fixed</a></li>
+                                                    <li><a href="header-disable-fixed.html">Disable Fixed</a></li>
+                                                    <li><a href="header-responsive-fixed.html">Responsive Fixed</a></li>
+                                                    <li class="dropdown-submenu"><a href="#">Logo</a>
+                                                        <ul class="dropdown-menu">
+                                                            <li><a href="header-logo.html">Left</a></li>
+                                                            <li><a href="header-logo-right.html">Right</a></li>
+                                                            <li><a href="header-logo-center.html">Center</a></li>
+                                                            <li><a href="header-logo-fixed-header.html">Header Fixed Logo</a></li>
+                                                            <li><a href="header-logo-responsive.html">Header Responsive Logo</a></li>
+                                                        </ul>
+                                                    </li>
+                                                    <li class="dropdown-submenu"><a href="#">Menu Positions</a>
+                                                        <ul class="dropdown-menu">
+                                                            <li><a href="header-menu-left.html">Left</a></li>
+                                                            <li><a href="header-menu-right.html">Right</a></li>
+                                                            <li><a href="header-menu-center.html">Center</a></li>
+                                                        </ul>
+                                                    </li>
+                                                </ul>
+                                            </li>
+                                            <li class="dropdown-submenu"><a href="#">Main Menu<span class="badge badge-danger">NEW</span></a>
+                                                <ul class="dropdown-menu">
+                                                    <li><a href="menu.html">Default</a></li>
+                                                    <li><a href="menu-lowercase.html">Lowercase</a></li>
+                                                    <li><a href="menu-split.html">Split Menu</a></li>
+                                                    <li><a href="menu-sub-title.html">Sub Title Menu</a></li>
+                                                    <li><a href="menu-overlay.html">Overlay Menu</a></li>
+                                                    <li><a href="menu-creative.html">Creative Menu</a></li>
+                                                    <li><a href="menu-lines.html">Lines Menu</a></li>
+                                                    <li class="dropdown-submenu"><a href="#">Outline</a>
+                                                        <ul class="dropdown-menu">
+                                                            <li><a href="menu-outline.html">Default</a></li>
+                                                            <li><a href="menu-outline-dark.html">Dark</a></li>
+                                                            <li><a href="menu-outline-light.html">Light</a></li>
+                                                        </ul>
+                                                    </li>
+                                                    <li class="dropdown-submenu"><a href="#">Rounded</a>
+                                                        <ul class="dropdown-menu">
+                                                            <li><a href="menu-rounded.html">Default</a></li>
+                                                            <li><a href="menu-rounded-dark.html">Dark</a></li>
+                                                            <li><a href="menu-rounded-light.html">Light</a></li>
+                                                        </ul>
+                                                    </li>
+                                                    <li class="dropdown-submenu"><a href="#">Positions</a>
+                                                        <ul class="dropdown-menu">
+                                                            <li><a href="menu-left.html">Left Aligned</a></li>
+                                                            <li><a href="menu-center.html">Center Aligned</a></li>
+                                                            <li><a href="menu-right.html">Right Aligned</a></li>
+                                                        </ul>
+                                                    </li>
+                                                    <li><a href="menu-dots.html">Dots Menu</a></li>
+                                                    <li><a href="menu-one-page.html">One Page Menu</a></li>
+                                                    <li><a href="menu-hover-background.html">Hover Background</a></li>
+                                                    <li><a href="menu-button.html">Button Version</a></li>
+                                                    <li><a href="menu-social-icons.html">Social Icons Version</a></li>
+                                                    <li><a href="menu-onclick.html">OnClick Open</a></li>
+                                                    <li><a href="menu-rounded-dropdown.html">Rounded Dropdown</a></li>
+                                                </ul>
+                                            </li>
+                                            <li class="dropdown-submenu"><a href="#">Page Title</a>
+                                                <ul class="dropdown-menu">
+                                                    <li><a href="page-title.html">Default</a></li>
+                                                    <li><a href="page-title-image.html">Image background</a></li>
+                                                    <li><a href="page-title-video.html">Video background</a></li>
+                                                    <li><a href="page-title-pattern.html">Pattern background</a></li>
+                                                    <li><a href="page-title-background-color.html">Colored background</a></li>
+                                                    <li><a href="page-title-parallax.html">Parallax</a></li>
+                                                    <li><a href="page-title-animated.html">Animated</a></li>
+                                                    <li><a href="page-title-right.html">Right Aligned</a></li>
+                                                    <li><a href="page-title-left.html">Left Aligned</a></li>
+                                                </ul>
+                                            </li>
+                                            <li class="dropdown-submenu"><a href="#">Page Menu<span class="badge badge-danger">NEW</span></a>
+                                                <ul class="dropdown-menu">
+                                                    <li><a href="page-menu.html">Default</a></li>
+                                                    <li><a href="page-menu-rounded.html">Rounded</a></li>
+                                                    <li><a href="page-menu-outline.html">Outline</a></li>
+                                                    <li><a href="page-menu-lines.html">Lines</a></li>
+                                                    <li><a href="page-menu-solid.html">Solid</a></li>
+                                                    <li><a href="page-menu-light.html">Light</a></li>
+                                                    <li><a href="page-menu-dark.html">Dark</a></li>
+                                                    <li><a href="page-menu-creative.html">Creative</a></li>
+                                                    <li><a href="page-menu.html">Dropdown</a></li>
+                                                </ul>
+                                            </li>
+                                        </ul>
+                                    </li>
+                                    <li class="dropdown"><a href="about">БИД ХЭН БЭ <b style="color:rgb(111, 204, 165)">?</b></a>
+                                        <ul class="dropdown-menu">
+                                            <li class="dropdown-submenu"><a href="#">Sliders</a>
+                                                <ul class="dropdown-menu">
+                                                    <li><a href="slider-revolution-slider.html">Revolution Slider</a></li>
+                                                    <li><a href="slider-inspiro-slider.html">Inspiro Slider</a></li>
+                                                    <li><a href="slider-static-media-image.html">Fullscreen Image</a></li>
+                                                    <li><a href="slider-static-media-parallax.html">Fullscreen Parallax</a></li>
+                                                    <li><a href="slider-static-media-text-rotator.html">Fullscreen Text Rotator</a></li>
+                                                    <li><a href="slider-static-media-video.html">Fullscreen HTML5 Video</a></li>
+                                                </ul>
+                                            </li>
+                                            <li><a href="widgets.html">Widgets</a></li>
+                                            <li><a href="page-loaders.html">Page Loaders<span class="badge badge-danger">NEW</span></a></li>
+                                            <li class="dropdown-submenu"><a href="#">Modal Auto Open<span class="badge badge-danger">NEW</span></a>
+                                                <ul class="dropdown-menu">
+                                                    <li><a href="modal-auto-open-subscription.html">Subscription</a></li>
+                                                    <li><a href="modal-auto-open-shop.html">Shop Promotion</a></li>
+                                                    <li><a href="modal-auto-open-login.html">Login Form</a></li>
+                                                    <li><a href="modal-auto-open-audio.html">Audio Player</a></li>
+                                                    <li><a href="modal-auto-open-video.html">HTML5 Video</a></li>
+                                                    <li><a href="modal-auto-open-youtube.html">YouTube Video</a></li>
+                                                    <li><a href="modal-auto-open-vimeo.html">Vimeo Video</a></li>
+                                                    <li><a href="modal-auto-open-iframe.html">Iframe</a></li>
+                                                    <li><a href="modal-auto-open.html">Sample Text</a></li>
+                                                </ul>
+                                            </li>
+                                            <li class="dropdown-submenu"><a href="#">Cookie Notify<span class="badge badge-danger">NEW</span></a>
+                                                <ul class="dropdown-menu">
+                                                    <li><a href="cookie-notify.html">Top position</a></li>
+                                                    <li><a href="cookie-notify-bottom.html">Bottom position</a></li>
+                                                </ul>
+                                            </li>
+                                            <li><a href="shape-dividers.html">Shape Dividers<span class="badge badge-danger">NEW</span></a></li>
+                                            <li class="dropdown-submenu"><a href="#">Menu Labels</a>
+                                                <ul class="dropdown-menu">
+                                                    <li><a href="#">Label (new)<span class="badge badge-danger">NEW</span></a></li>
+                                                    <li><a href="#">Label (hot)<span class="badge badge-danger">HOT</span></a></li>
+                                                    <li><a href="#">Label (popular)<span class="badge badge-success">POPULAR</span></a></li>
+                                                    <li><a href="#">Label (sale)<span class="badge badge-warning">SALE</span></a></li>
+                                                    <li><a href="#">Label (info)<span class="badge badge-info">INFO</span></a></li>
+                                                </ul>
+                                            </li>
+                                        </ul>
+                                    </li>
+                                </ul>
+                            </nav>
+                        </div>
+                    </div>
+                    <!--end: Navigation-->
+                </div>
+            </div>
+        </header>
+        <!-- end: Header -->
+        <!-- Inspiro Slider -->
+        <div id="slider" class="inspiro-slider slider-fullscreen dots-creative" data-fade="true">
+            <!-- Slide 1 -->
+            <div class="slide kenburns" data-bg-image="https://raw.githubusercontent.com/dorjzodovsuren/Kiddo/main/photos/learning_1.jpg">
+                <div class="bg-overlay"></div>
+                <div class="container">
+                    <div class="slide-captions text-center text-light">
+                        <!-- Captions -->
+                        <h1>KidDo-д хүрэлцэн ирсэнд баярлалаа 😄</h1>
+                        <p><b>KidDo</b>-ийн ах, эгч нар нь энэхүү контентийг хөөрхөн дүү нартаа зориулан, ойлгоход маш хялбар байхаар орчуулан хүргэж байна.</p>
+                        <div><a href="#welcome" class="btn scroll-to">Content үзэх</a></div>
+                        </span>
+                        <!-- end: Captions -->
+                    </div>
+                </div>
+            </div>
+            <!-- end: Slide 1 -->
+            <!-- Slide 2 -->
+            <div class="slide" data-bg-video="video/pexels-waves.mp4">
+                <div class="bg-overlay"></div>
+                <div class="container">
+                    <div class="slide-captions text-left text-light">
+                        <!-- Captions -->
+                        <h1>Хүүхэд бүхэнд боломж</h1>
+                        <p class="text-small">KidDo-ийн ах эгч нар нь энэхүү контентийг хөөрхөн дүү нартаа зориулан, ойлгоход маш хялбар байхаар орчуулан хүргэж байна.</p>
+                        <div><a href="#welcome" class="btn scroll-to">Content үзэх</a></div>
+                    </div>
+                </div>
+            </div>
+            <!-- end: Slide 2 -->
+        </div>
+        <!--end: Inspiro Slider -->
+        <!-- WELCOME -->
+        <section id="welcome" class="p-b-0">
+            <div class="container">
+                <div class="heading-text heading-section text-center m-b-40" data-animate="fadeInUp">
+                    <h2>KidDo content-д тавтай морил</h2>
+                    <span class="lead">Create amam ipsum dolor sit amet, Beautiful nature, and rare feathers!.</span>
+                </div>
+                <div class="row" data-animate="fadeInUp">
+                    <div class="col-lg-12" style="text-align: center;">
+                        <img class="img-fluid" src="https://github.com/dorjzodovsuren/Kiddo/blob/main/photos/kids_1.jpg?raw=true" alt="Welcome to POLO">
+                    </div>
+                </div>
+            </div>
+        </section>
+        <!-- end: WELCOME -->
+        <!-- WHAT WE DO -->
+        <section class="background-grey">
+            <div class="container">
+                <div class="heading-text heading-section">
+                    <h2>WHAT WE DO</h2>
+                    <span class="lead">Create amam ipsum dolor sit amet, Beautiful nature, and rare feathers!.</span>
+                </div>
+                <div class="row">
+                    <div class="col-lg-4">
+                        <div data-animate="fadeInUp" data-animate-delay="0">
+                            <h4>Modern Design</h4>
+                            <p>Lorem ipsum dolor sit amet, blandit vel sapien vitae, condimentum ultricies magna et. Quisque euismod orci ut et lobortis aliquam.</p>
+                        </div>
+                    </div>
+                    <div class="col-lg-4">
+                        <div data-animate="fadeInUp" data-animate-delay="200">
+                            <h4>Loaded with Features</h4>
+                            <p>Lorem ipsum dolor sit amet, blandit vel sapien vitae, condimentum ultricies magna et. Quisque euismod orci ut et lobortis aliquam.</p>
+                        </div>
+                    </div>
+                    <div class="col-lg-4">
+                        <div data-animate="fadeInUp" data-animate-delay="400">
+                            <h4>Completely Customizable</h4>
+                            <p>Lorem ipsum dolor sit amet, blandit vel sapien vitae, condimentum ultricies magna et. Quisque euismod orci ut et lobortis aliquam.</p>
+                        </div>
+                    </div>
+                    <div class="col-lg-4">
+                        <div data-animate="fadeInUp" data-animate-delay="600">
+                            <h4>100% Responsive Layout</h4>
+                            <p>Lorem ipsum dolor sit amet, blandit vel sapien vitae, condimentum ultricies magna et. Quisque euismod orci ut et lobortis aliquam.</p>
+                        </div>
+                    </div>
+                    <div class="col-lg-4">
+                        <div data-animate="fadeInUp" data-animate-delay="800">
+                            <h4>Clean Modern Code</h4>
+                            <p>Lorem ipsum dolor sit amet, blandit vel sapien vitae, condimentum ultricies magna et. Quisque euismod orci ut et lobortis aliquam.</p>
+                        </div>
+                    </div>
+                    <div class="col-lg-4">
+                        <div data-animate="fadeInUp" data-animate-delay="1000">
+                            <h4>Free Updates & Support</h4>
+                            <p>Lorem ipsum dolor sit amet, blandit vel sapien vitae, condimentum ultricies magna et. Quisque euismod orci ut et lobortis aliquam.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        <!-- END WHAT WE DO -->
+        <!-- PORTFOLIO -->
+        <section class="p-b-0">
+            <div class="container">
+                <div class="heading-text heading-section">
+                    <h2>Recent Work</h2>
+                    <span class="lead">Lorem ipsum dolor sit amet, coper suscipit lobortis nisl ut aliquip ex ea commodo
+                        consequat. Duis autem vel eum iriure dolor in hendrerit in vulputate velit esse molestie
+                        consequat, vel illum dolore eu feugiat nulla facilisis at vero eros et accumsan et iusto.</span>
+                </div>
+            </div>
+            <div class="portfolio">
+                <!-- Portfolio Items -->
+                <div id="portfolio" class="grid-layout portfolio-4-columns" data-margin="0">
+                    <!-- portfolio item -->
+                    <div class="portfolio-item no-overlay ct-photography ct-media ct-branding ct-Media ct-webdesign">
+                        <div class="portfolio-item-wrap">
+                            <div class="portfolio-slider">
+                                <div class="carousel dots-inside dots-dark arrows-dark" data-items="1" data-loop="true" data-autoplay="true" data-animate-in="fadeIn" data-animate-out="fadeOut" data-autoplay="1500">
+                                    <a href="#"><img src="images/portfolio/64.jpg" alt=""></a>
+                                    <a href="#"><img src="images/portfolio/70.jpg" alt=""></a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- end: portfolio item -->
+                    <!-- portfolio item -->
+                    <div class="portfolio-item img-zoom ct-photography ct-marketing ct-media">
+                        <div class="portfolio-item-wrap">
+                            <div class="portfolio-image">
+                                <a href="#"><img src="images/portfolio/60.jpg" alt=""></a>
+                            </div>
+                            <div class="portfolio-description">
+                                <a title="Paper Pouch!" data-lightbox="image" href="images/portfolio/83l.jpg"><i class="icon-maximize"></i></a>
+                                <a href="portfolio-page-grid-gallery.html"><i class="icon-link"></i></a>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- end: portfolio item -->
+                    <!-- portfolio item -->
+                    <div class="portfolio-item img-zoom ct-photography ct-media ct-branding ct-Media">
+                        <div class="portfolio-item-wrap">
+                            <div class="portfolio-image">
+                                <a href="#"><img src="images/portfolio/61.jpg" alt=""></a>
+                            </div>
+                            <div class="portfolio-description">
+                                <a href="portfolio-page-grid-gallery.html">
+                                    <h3>Let's Go Outside</h3>
+                                    <span>Illustrations / Graphics</span>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- end: portfolio item -->
+                    <!-- portfolio item -->
+                    <div class="portfolio-item img-zoom ct-photography ct-media ct-branding ct-marketing ct-webdesign">
+                        <div class="portfolio-item-wrap">
+                            <div class="portfolio-image">
+                                <a href="#"><img src="images/portfolio/65.jpg" alt=""></a>
+                            </div>
+                            <div class="portfolio-description" data-lightbox="gallery">
+                                <a title="Photoshop Mock-up!" data-lightbox="gallery-image" href="images/portfolio/80l.jpg"><i class="icon-copy"></i></a>
+                                <a title="Paper Pouch!" data-lightbox="gallery-image" href="images/portfolio/81l.jpg" class="hidden"></a>
+                                <a title="Mock-up" data-lightbox="gallery-image" href="images/portfolio/82l.jpg" class="hidden"></a>
+                                <a href="portfolio-page-grid-gallery.html"><i class="icon-link"></i></a>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- end: portfolio item -->
+                    <!-- portfolio item -->
+                    <div class="portfolio-item img-zoom ct-marketing ct-media ct-branding ct-marketing ct-webdesign">
+                        <div class="portfolio-item-wrap">
+                            <div class="portfolio-image">
+                                <a href="#"><img src="images/portfolio/66.jpg" alt=""></a>
+                            </div>
+                            <div class="portfolio-description">
+                                <a href="portfolio-page-grid-gallery.html">
+                                    <h3>Last Iceland Sunshine</h3>
+                                    <span>Graphics</span>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- end: portfolio item -->
+                    <!-- portfolio item -->
+                    <div class="portfolio-item img-zoom ct-photography ct-media ct-branding ct-marketing ct-webdesign">
+                        <div class="portfolio-item-wrap">
+                            <div class="portfolio-image">
+                                <a href="#"><img src="images/portfolio/67.jpg" alt=""></a>
+                            </div>
+                            <div class="portfolio-description">
+                                <a title="Paper Pouch!" data-lightbox="iframe" href="https://www.youtube.com/watch?v=k6Kly58LYzY"><i class="icon-play"></i></a>
+                                <a href="portfolio-page-grid-gallery.html"><i class="icon-link"></i></a>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- end: portfolio item -->
+                    <!-- portfolio item -->
+                    <div class="portfolio-item no-overlay ct-photography ct-media ct-branding ct-Media ct-marketing ct-webdesign">
+                        <div class="portfolio-item-wrap">
+                            <div class="portfolio-slider">
+                                <div class="carousel dots-inside dots-dark arrows-dark" data-items="1" data-loop="true" data-autoplay="true" data-animate-in="fadeIn" data-animate-out="fadeOut" data-autoplay="1500">
+                                    <a href="#"><img src="images/portfolio/68.jpg" alt=""></a>
+                                    <a href="#"><img src="images/portfolio/71.jpg" alt=""></a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- end: portfolio item -->
+                    <!-- portfolio item -->
+                    <div class="portfolio-item img-zoom ct-photography ct-marketing ct-media">
+                        <div class="portfolio-item-wrap">
+                            <div class="portfolio-image">
+                                <a href="#"><img src="images/portfolio/69.jpg" alt=""></a>
+                            </div>
+                            <div class="portfolio-description">
+                                <a href="portfolio-page-grid-gallery.html">
+                                    <h3>Luxury Wine</h3>
+                                    <span>Graphics / Branding</span>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- end: portfolio item -->
+                </div>
+                <!-- end: Portfolio Items -->
+            </div>
+        </section>
+        <!-- end: PORTFOLIO -->
+        <!-- SERVICES -->
+        <section>
+            <div class="container">
+                <div class="heading-text heading-section text-center">
+                    <h2>SERVICES</h2>
+                    <p>Lorem ipsum dolor sit amet, consecte adipiscing elit. Suspendisse condimentum porttitor cursumus.
+                    </p>
+                </div>
+                <div class="row">
+                    <div class="col-lg-4" data-animate="fadeInUp" data-animate-delay="0">
+                        <div class="icon-box effect medium border small">
+                            <div class="icon">
+                                <a href="#"><i class="fa fa-plug"></i></a>
+                            </div>
+                            <h3>Powerful template</h3>
+                            <p>Lorem ipsum dolor sit amet, consecte adipiscing elit. Suspendisse condimentum porttitor cursumus.
+                            </p>
+                        </div>
+                    </div>
+                    <div class="col-lg-4" data-animate="fadeInUp" data-animate-delay="200">
+                        <div class="icon-box effect medium border small">
+                            <div class="icon">
+                                <a href="#"><i class="fa fa-desktop"></i></a>
+                            </div>
+                            <h3>Flexible Layouts</h3>
+                            <p>Lorem ipsum dolor sit amet, consecte adipiscing elit. Suspendisse condimentum porttitor cursumus.
+                            </p>
+                        </div>
+                    </div>
+                    <div class="col-lg-4" data-animate="fadeInUp" data-animate-delay="400">
+                        <div class="icon-box effect medium border small">
+                            <div class="icon">
+                                <a href="#"><i class="fa fa-cloud"></i></a>
+                            </div>
+                            <h3>Retina Ready</h3>
+                            <p>Lorem ipsum dolor sit amet, consecte adipiscing elit. Suspendisse condimentum porttitor cursumus.
+                            </p>
+                        </div>
+                    </div>
+                    <div class="col-lg-4" data-animate="fadeInUp" data-animate-delay="600">
+                        <div class="icon-box effect medium border small">
+                            <div class="icon">
+                                <a href="#"><i class="far fa-lightbulb"></i></a>
+                            </div>
+                            <h3>Fast processing</h3>
+                            <p>Lorem ipsum dolor sit amet, consecte adipiscing elit. Suspendisse condimentum porttitor cursumus.
+                            </p>
+                        </div>
+                    </div>
+                    <div class="col-lg-4" data-animate="fadeInUp" data-animate-delay="800">
+                        <div class="icon-box effect medium border small">
+                            <div class="icon">
+                                <a href="#"><i class="fa fa-trophy"></i></a>
+                            </div>
+                            <h3>Unlimited Colors</h3>
+                            <p>Lorem ipsum dolor sit amet, consecte adipiscing elit. Suspendisse condimentum porttitor cursumus.
+                            </p>
+                        </div>
+                    </div>
+                    <div class="col-lg-4" data-animate="fadeInUp" data-animate-delay="1000">
+                        <div class="icon-box effect medium border small">
+                            <div class="icon">
+                                <a href="#"><i class="fa fa-thumbs-up"></i></a>
+                            </div>
+                            <h3>Premium Sliders</h3>
+                            <p>Lorem ipsum dolor sit amet, consecte adipiscing elit. Suspendisse condimentum porttitor cursumus.
+                            </p>
+                        </div>
+                    </div>
+                    <div class="col-lg-4" data-animate="fadeInUp" data-animate-delay="1200">
+                        <div class="icon-box effect medium border small">
+                            <div class="icon">
+                                <a href="#"><i class="fa fa-rocket"></i></a>
+                            </div>
+                            <h3>Modern Design</h3>
+                            <p>Lorem ipsum dolor sit amet, consecte adipiscing elit. Suspendisse condimentum porttitor cursumus.
+                            </p>
+                        </div>
+                    </div>
+                    <div class="col-lg-4" data-animate="fadeInUp" data-animate-delay="1400">
+                        <div class="icon-box effect medium border small">
+                            <div class="icon">
+                                <a href="#"><i class="fa fa-flask"></i></a>
+                            </div>
+                            <h3>Clean Modern Code</h3>
+                            <p>Lorem ipsum dolor sit amet, consecte adipiscing elit. Suspendisse condimentum porttitor cursumus.
+                            </p>
+                        </div>
+                    </div>
+                    <div class="col-lg-4" data-animate="fadeInUp" data-animate-delay="1600">
+                        <div class="icon-box effect medium border small">
+                            <div class="icon">
+                                <a href="#"><i class="fa fa-umbrella"></i></a>
+                            </div>
+                            <h3>Free Updates & Support</h3>
+                            <p>Lorem ipsum dolor sit amet, consecte adipiscing elit. Suspendisse condimentum porttitor cursumus.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        <!-- end: SERVICES -->
+        <!-- COUNTERS -->
+        <section class="text-light p-t-150 p-b-150 " data-bg-parallax="images/parallax/12.jpg">
+            <div class="bg-overlay"></div>
+            <div class="container">
+                <div class="row">
+                    <div class="col-lg-3">
+                        <div class="text-center">
+                            <div class="icon"><i class="fa fa-3x fa-code"></i></div>
+                            <div class="counter"> <span data-speed="3000" data-refresh-interval="50" data-to="12416" data-from="600" data-seperator="true"></span> </div>
+                            <div class="seperator seperator-small"></div>
+                            <p>LINES OF CODE</p>
+                        </div>
+                    </div>
+                    <div class="col-lg-3">
+                        <div class="text-center">
+                            <div class="icon"><i class="fa fa-3x fa-coffee"></i></div>
+                            <div class="counter"> <span data-speed="4500" data-refresh-interval="23" data-to="365" data-from="100" data-seperator="true"></span> </div>
+                            <div class="seperator seperator-small"></div>
+                            <p>CUPS OF COFFEE</p>
+                        </div>
+                    </div>
+                    <div class="col-lg-3">
+                        <div class="text-center">
+                            <div class="icon"><i class="fa fa-3x fa-rocket"></i></div>
+                            <div class="counter"> <span data-speed="3000" data-refresh-interval="12" data-to="114" data-from="50" data-seperator="true"></span> </div>
+                            <div class="seperator seperator-small"></div>
+                            <p>FINISHED PROJECTS</p>
+                        </div>
+                    </div>
+                    <div class="col-lg-3">
+                        <div class="text-center">
+                            <div class="icon"><i class="fa fa-3x fa-smile-o"></i></div>
+                            <div class="counter"> <span data-speed="4550" data-refresh-interval="50" data-to="14825" data-from="48" data-seperator="true"></span> </div>
+                            <div class="seperator seperator-small"></div>
+                            <p>SATISFIED CLIENTS</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        <!-- end: COUNTERS -->
+        <!-- BLOG -->
+        <section class="content background-grey">
+            <div class="container">
+                <div class="heading-text heading-section">
+                    <h2>OUR BLOG</h2>
+                    <span class="lead">The most happiest time of the day!. Morbi sagittis, sem quis lacinia faucibus,
+                        orci ipsum gravida tortor, vel interdum mi sapien ut justo. Nulla varius consequat magna, id
+                        molestie ipsum volutpat quis. A true story, that never been told!. Fusce id mi diam, non ornare
+                        orci. Pellentesque ipsum erat, facilisis ut venenatis eu, sodales vel dolor. </span>
+                </div>
+                <div id="blog" class="grid-layout post-3-columns m-b-30" data-item="post-item">
+                    <!-- Post item-->
+                    <div class="post-item border">
+                        <div class="post-item-wrap">
+                            <div class="post-image">
+                                <a href="#">
+                                    <img alt="" src="images/blog/12.jpg">
+                                </a>
+                                <span class="post-meta-category"><a href="">Lifestyle</a></span>
+                            </div>
+                            <div class="post-item-description">
+                                <span class="post-meta-date"><i class="fa fa-calendar-o"></i>Jan 21, 2017</span>
+                                <span class="post-meta-comments"><a href=""><i class="fa fa-comments-o"></i>33
+                                        Comments</a></span>
+                                <h2><a href="#">Standard post with a single image
+                                    </a></h2>
+                                <p>Curabitur pulvinar euismod ante, ac sagittis ante posuere ac. Vivamus luctus commodo dolor porta feugiat. Fusce at velit id ligula pharetra laoreet.</p>
+                                <a href="#" class="item-link">Read More <i class="icon-chevron-right"></i></a>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- end: Post item-->
+                    <!-- Post item-->
+                    <div class="post-item border">
+                        <div class="post-item-wrap">
+                            <div class="post-image">
+                                <a href="#">
+                                    <img alt="" src="images/blog/17.jpg">
+                                </a>
+                                <span class="post-meta-category"><a href="">Science</a></span>
+                            </div>
+                            <div class="post-item-description">
+                                <span class="post-meta-date"><i class="fa fa-calendar-o"></i>Jan 21, 2017</span>
+                                <span class="post-meta-comments"><a href=""><i class="fa fa-comments-o"></i>33
+                                        Comments</a></span>
+                                <h2><a href="#">Standard post with a single image
+                                    </a></h2>
+                                <p>Curabitur pulvinar euismod ante, ac sagittis ante posuere ac. Vivamus luctus commodo dolor porta feugiat. Fusce at velit id ligula pharetra laoreet.</p>
+                                <a href="#" class="item-link">Read More <i class="icon-chevron-right"></i></a>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- end: Post item-->
+                    <!-- Post item-->
+                    <div class="post-item border">
+                        <div class="post-item-wrap">
+                            <div class="post-image">
+                                <a href="#">
+                                    <img alt="" src="images/blog/18.jpg">
+                                </a>
+                                <span class="post-meta-category"><a href="">Science</a></span>
+                            </div>
+                            <div class="post-item-description">
+                                <span class="post-meta-date"><i class="fa fa-calendar-o"></i>Jan 21, 2017</span>
+                                <span class="post-meta-comments"><a href=""><i class="fa fa-comments-o"></i>33
+                                        Comments</a></span>
+                                <h2><a href="#">Standard post with a single image
+                                    </a></h2>
+                                <p>Curabitur pulvinar euismod ante, ac sagittis ante posuere ac. Vivamus luctus commodo dolor porta feugiat. Fusce at velit id ligula pharetra laoreet.</p>
+                                <a href="#" class="item-link">Read More <i class="icon-chevron-right"></i></a>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- end: Post item-->
+                </div>
+            </div>
+        </section>
+        <!-- end: BLOG -->
+        <!-- CLIENTS -->
+        <section class="p-t-60">
+            <div class="container">
+                <div class="heading-text heading-section text-center">
+                    <h2>CLIENTS</h2>
+                    <span class="lead">Our awesome clients we've had the pleasure to work with! </span>
+                </div>
+                <div class="carousel client-logos" data-items="6" data-items-sm="4" data-items-xs="3" data-items-xxs="2" data-margin="20" data-arrows="false" data-autoplay="true" data-autoplay="3000" data-loop="true">
+                    <div>
+                        <a href="#"><img alt="" src="images/clients/1.png"> </a>
+                    </div>
+                    <div>
+                        <a href="#"><img alt="" src="images/clients/2.png"> </a>
+                    </div>
+                    <div>
+                        <a href="#"><img alt="" src="images/clients/3.png"> </a>
+                    </div>
+                    <div>
+                        <a href="#"><img alt="" src="images/clients/4.png"> </a>
+                    </div>
+                    <div>
+                        <a href="#"><img alt="" src="images/clients/5.png"> </a>
+                    </div>
+                    <div>
+                        <a href="#"><img alt="" src="images/clients/6.png"> </a>
+                    </div>
+                    <div>
+                        <a href="#"><img alt="" src="images/clients/7.png"> </a>
+                    </div>
+                    <div>
+                        <a href="#"><img alt="" src="images/clients/8.png"> </a>
+                    </div>
+                    <div>
+                        <a href="#"><img alt="" src="images/clients/9.png"> </a>
+                    </div>
+                </div>
+            </div>
+        </section>
+        <!-- end: CLIENTS -->
+        <!-- TEAM -->
+        <section class="background-grey">
+            <div class="container">
+                <div class="heading-text heading-section text-center">
+                    <h2>MEET OUR TEAM</h2>
+                    <p>Lorem ipsum dolor sit amet, consecte adipiscing elit. Suspendisse condimentum porttitor cursumus.
+                    </p>
+                </div>
+                <div class="row team-members">
+                    <div class="col-lg-3">
+                        <div class="team-member">
+                            <div class="team-image">
+                                <img src="images/team/6.jpg">
+                            </div>
+                            <div class="team-desc">
+                                <h3>Alea Smith</h3>
+                                <span>Software Developer</span>
+                                <p>Lorem ipsum dolor sit amet, consectetur adipiscing tristique hendrerit laoreet. </p>
+                                <div class="align-center">
+                                    <a class="btn btn-xs btn-slide btn-light" href="#">
+                                        <i class="fab fa-facebook-f"></i>
+                                        <span>Facebook</span>
+                                    </a>
+                                    <a class="btn btn-xs btn-slide btn-light" href="#" data-width="100">
+                                        <i class="fab fa-twitter"></i>
+                                        <span>Twitter</span>
+                                    </a>
+                                    <a class="btn btn-xs btn-slide btn-light" href="#" data-width="118">
+                                        <i class="fab fa-instagram"></i>
+                                        <span>Instagram</span>
+                                    </a>
+                                    <a class="btn btn-xs btn-slide btn-light" href="mailto:#" data-width="80">
+                                        <i class="icon-mail"></i>
+                                        <span>Mail</span>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-3">
+                        <div class="team-member">
+                            <div class="team-image">
+                                <img src="images/team/7.jpg">
+                            </div>
+                            <div class="team-desc">
+                                <h3>Ariol Doe</h3>
+                                <span>Software Developer</span>
+                                <p>Lorem ipsum dolor sit amet, consectetur adipiscing tristique hendrerit laoreet. </p>
+                                <div class="align-center">
+                                    <a class="btn btn-xs btn-slide btn-light" href="#">
+                                        <i class="fab fa-facebook-f"></i>
+                                        <span>Facebook</span>
+                                    </a>
+                                    <a class="btn btn-xs btn-slide btn-light" href="#" data-width="100">
+                                        <i class="fab fa-twitter"></i>
+                                        <span>Twitter</span>
+                                    </a>
+                                    <a class="btn btn-xs btn-slide btn-light" href="#" data-width="118">
+                                        <i class="fab fa-instagram"></i>
+                                        <span>Instagram</span>
+                                    </a>
+                                    <a class="btn btn-xs btn-slide btn-light" href="mailto:#" data-width="80">
+                                        <i class="icon-mail"></i>
+                                        <span>Mail</span>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-3">
+                        <div class="team-member">
+                            <div class="team-image">
+                                <img src="images/team/8.jpg">
+                            </div>
+                            <div class="team-desc">
+                                <h3>Emma Ross</h3>
+                                <span>Software Developer</span>
+                                <p>Lorem ipsum dolor sit amet, consectetur adipiscing tristique hendrerit laoreet. </p>
+                                <div class="align-center">
+                                    <a class="btn btn-xs btn-slide btn-light" href="#">
+                                        <i class="fab fa-facebook-f"></i>
+                                        <span>Facebook</span>
+                                    </a>
+                                    <a class="btn btn-xs btn-slide btn-light" href="#" data-width="100">
+                                        <i class="fab fa-twitter"></i>
+                                        <span>Twitter</span>
+                                    </a>
+                                    <a class="btn btn-xs btn-slide btn-light" href="#" data-width="118">
+                                        <i class="fab fa-instagram"></i>
+                                        <span>Instagram</span>
+                                    </a>
+                                    <a class="btn btn-xs btn-slide btn-light" href="mailto:#" data-width="80">
+                                        <i class="icon-mail"></i>
+                                        <span>Mail</span>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-3">
+                        <div class="team-member">
+                            <div class="team-image">
+                                <img src="images/team/9.jpg">
+                            </div>
+                            <div class="team-desc">
+                                <h3>Victor Loda</h3>
+                                <span>Software Developer</span>
+                                <p>Lorem ipsum dolor sit amet, consectetur adipiscing tristique hendrerit laoreet. </p>
+                                <div class="align-center">
+                                    <a class="btn btn-xs btn-slide btn-light" href="#">
+                                        <i class="fab fa-facebook-f"></i>
+                                        <span>Facebook</span>
+                                    </a>
+                                    <a class="btn btn-xs btn-slide btn-light" href="#" data-width="100">
+                                        <i class="fab fa-twitter"></i>
+                                        <span>Twitter</span>
+                                    </a>
+                                    <a class="btn btn-xs btn-slide btn-light" href="#" data-width="118">
+                                        <i class="fab fa-instagram"></i>
+                                        <span>Instagram</span>
+                                    </a>
+                                    <a class="btn btn-xs btn-slide btn-light" href="mailto:#" data-width="80">
+                                        <i class="icon-mail"></i>
+                                        <span>Mail</span>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        <!-- end: TEAM -->
+        <!-- Footer -->
+        <footer id="footer">
+            <div class="footer-content">
+                <div class="container">
+                    <div class="row">
+                        <div class="col-lg-5">
+                            <div class="widget">
+                                <div class="widget-title">Polo HTML5 Template</div>
+                                <p class="mb-5">Built with love in Fort Worth, Texas, USA<br> All rights reserved. Copyright © 2019. INSPIRO.</p>
+                                <a href="https://themeforest.net/item/polo-responsive-multipurpose-html5-template/13708923" class="btn btn-inverted" target="_blank">Purchase Now</a>
+                            </div>
+                        </div>
+                        <div class="col-lg-7">
+                            <div class="row">
+                                <div class="col-lg-3">
+                                    <div class="widget">
+                                        <div class="widget-title">Discover</div>
+                                        <ul class="list">
+                                            <li><a href="#">Features</a></li>
+                                            <li><a href="#">Layouts</a></li>
+                                            <li><a href="#">Corporate</a></li>
+                                            <li><a href="#">Updates</a></li>
+                                            <li><a href="#">Pricing</a></li>
+                                            <li><a href="#">Customers</a></li>
+                                        </ul>
+                                    </div>
+                                </div>
+                                <div class="col-lg-3">
+                                    <div class="widget">
+                                        <div class="widget-title">Features</div>
+                                        <ul class="list">
+                                            <li><a href="#">Layouts</a></li>
+                                            <li><a href="#">Headers</a></li>
+                                            <li><a href="#">Widgets</a></li>
+                                            <li><a href="#">Footers</a></li>
+                                        </ul>
+                                    </div>
+                                </div>
+                                <div class="col-lg-3">
+                                    <div class="widget">
+                                        <div class="widget-title">Pages</div>
+                                        <ul class="list">
+                                            <li><a href="#">Portfolio</a></li>
+                                            <li><a href="#">Blog</a></li>
+                                            <li><a href="#">Shop</a></li>
+                                        </ul>
+                                    </div>
+                                </div>
+                                <div class="col-lg-3">
+                                    <div class="widget">
+                                        <div class="widget-title">Support</div>
+                                        <ul class="list">
+                                            <li><a href="#">Help Desk</a></li>
+                                            <li><a href="#">Documentation</a></li>
+                                            <li><a href="#">Contact Us</a></li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="copyright-content">
+                <div class="container">
+                    <div class="copyright-text text-center">&copy; 2019 POLO - Responsive Multi-Purpose HTML5 Template. All Rights Reserved.<a href="//www.inspiro-media.com" target="_blank" rel="noopener"> INSPIRO</a> </div>
+                </div>
+            </div>
+        </footer>
+        <!-- end: Footer -->
+    </div>
+    <!-- end: Body Inner -->
+    <!-- Scroll top -->
+    <a id="scrollTop"><i class="icon-chevron-up"></i><i class="icon-chevron-up"></i></a>
+    <!--Plugins-->
+    <script src="js/jquery.js"></script>
+    <script src="js/plugins.js"></script>
+    <!--Template functions-->
+    <script src="js/functions.js"></script>
 </body>
+
 </html>
