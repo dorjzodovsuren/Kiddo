@@ -1,0 +1,17 @@
+{
+  "name": "kiddo",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Kiddo static site test suite",
+  "scripts": {
+    "test": "playwright test",
+    "test:html": "html-validate index.html",
+    "test:all": "npm run test:html && npm run test"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "^4.10.1",
+    "@playwright/test": "^1.48.0",
+    "html-validate": "^8.24.0",
+    "http-server": "^14.1.1"
+  }
+}
