@@ -1,8 +1,60 @@
-/* 
+/*
 
 1. Add your custom Css styles below
-2. Place the this code in your template: 
+2. Place the this code in your template:
 
  <link href="css/custom.css" rel="stylesheet">
 
 */
+
+/* ---------------------------------------------------------------
+   Glassmorphism header
+   Replaces the default "transparent, then solid white" header with
+   a frosted-glass look in every state: floating over the slider,
+   scrolled/sticky, and the mobile menu panel.
+------------------------------------------------------------------*/
+#header .header-inner,
+#header #header-wrap {
+  background-color: rgba(255, 255, 255, 0.35) !important;
+  -webkit-backdrop-filter: blur(18px) saturate(180%);
+  backdrop-filter: blur(18px) saturate(180%);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.35);
+  box-shadow: 0 8px 32px rgba(31, 38, 135, 0.12);
+}
+
+/* Floating over the slider: lighter tint so imagery still reads through */
+#header[data-transparent="true"]:not(.sticky-active) .header-inner,
+#header[data-transparent="true"]:not(.sticky-active) #header-wrap,
+#header[data-transparent="true"]:not(.sticky-active).dark .header-inner,
+#header[data-transparent="true"]:not(.sticky-active).dark #header-wrap {
+  background-color: rgba(255, 255, 255, 0.12) !important;
+  -webkit-backdrop-filter: blur(12px) saturate(160%);
+  backdrop-filter: blur(12px) saturate(160%);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.18);
+  box-shadow: none;
+}
+
+/* Scrolled: denser glass so nav text stays legible over page content */
+#header.sticky-active .header-inner,
+#header.sticky-active #header-wrap {
+  background-color: rgba(255, 255, 255, 0.55) !important;
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  backdrop-filter: blur(20px) saturate(180%);
+}
+
+/* Mobile menu open: glass instead of the default solid override */
+.mainMenu-open #header .header-inner,
+.mainMenu-open #header #header-wrap {
+  background-color: rgba(255, 255, 255, 0.55) !important;
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  backdrop-filter: blur(20px) saturate(180%);
+  box-shadow: 0 8px 32px rgba(31, 38, 135, 0.15);
+}
+
+/* Desktop dropdown submenus: same frosted-glass treatment */
+#mainMenu nav > ul > li .dropdown-menu {
+  background-color: rgba(255, 255, 255, 0.65) !important;
+  -webkit-backdrop-filter: blur(16px) saturate(180%);
+  backdrop-filter: blur(16px) saturate(180%);
+  border-color: rgba(255, 255, 255, 0.4);
+}
