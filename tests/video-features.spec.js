@@ -74,6 +74,56 @@ test.describe('keyword search', () => {
   });
 });
 
+test.describe('videos dropdown', () => {
+  // Regression: each channel name used to be <a href="#"> inside a
+  // .dropdown-submenu, which functions.js intercepts with preventDefault(), so
+  // clicking a channel went nowhere. Its "Season" children pointed at
+  // header*.html, three template pages that do not exist in this repo.
+  test('lists exactly the three channel pages and nothing dead', async ({ page }) => {
+    await page.goto('/index.html');
+
+    const items = page.locator('#mainMenu nav > ul > li.dropdown').first().locator('.dropdown-menu a');
+    const hrefs = await items.evaluateAll((els) => els.map((e) => e.getAttribute('href')));
+
+    expect(hrefs.sort()).toEqual(CHANNELS.map((c) => c.page).sort());
+    expect(hrefs, 'dropdown must not contain placeholder links').not.toContain('#');
+  });
+
+  for (const ch of CHANNELS) {
+    test(`clicking "${ch.name}" opens its channel page with search`, async ({ page }) => {
+      await page.goto('/index.html');
+
+      // Open the dropdown the way a visitor does, then click the channel name.
+      await page.locator('#mainMenu nav > ul > li.dropdown').first().hover();
+
+      const link = page.locator(`#mainMenu nav a[href="${ch.page}"]`);
+      await expect(link).toBeVisible();
+      await link.click();
+
+      await page.waitForURL('**/' + ch.page);
+      await expect(page.locator('.channel-hero-title')).toHaveText(ch.name);
+      // "with search feature" is the point of the fix, so assert it landed.
+      await expect(page.locator('#videoSearch')).toBeVisible();
+      await expect(page.locator('.video-search-icon')).toBeVisible();
+    });
+  }
+
+  test('the dropdown works on a touch viewport too', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto('/index.html');
+
+    await page.locator('#mainMenu-trigger a').click();
+    await page.locator('#mainMenu nav > ul > li.dropdown > a').first().click();
+
+    const link = page.locator('#mainMenu nav a[href="channel-nutshell.html"]');
+    await expect(link).toBeVisible();
+    await link.click();
+
+    await page.waitForURL('**/channel-nutshell.html');
+    await expect(page.locator('#videoSearch')).toBeVisible();
+  });
+});
+
 test.describe('per-channel pages', () => {
   test('every channel has a working "all episodes" button on the homepage', async ({ page }) => {
     await page.goto('/index.html');
