@@ -58,3 +58,229 @@
   backdrop-filter: blur(16px) saturate(180%);
   border-color: rgba(255, 255, 255, 0.4);
 }
+
+/* ---------------------------------------------------------------
+   Keyword search — glass field with an always-visible magnifier
+------------------------------------------------------------------*/
+.video-search-wrap {
+  max-width: 520px;
+  margin: 0 auto 34px;
+  padding: 0 15px;
+}
+
+.video-search {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 16px;
+  height: 48px;
+  border-radius: 999px;
+  cursor: text;
+  background-color: rgba(255, 255, 255, 0.14);
+  -webkit-backdrop-filter: blur(18px) saturate(180%);
+  backdrop-filter: blur(18px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  box-shadow: 0 8px 32px rgba(31, 38, 135, 0.12);
+  transition: border-color .25s ease, box-shadow .25s ease, background-color .25s ease;
+}
+
+.video-search:focus-within {
+  background-color: rgba(255, 255, 255, 0.22);
+  border-color: rgba(34, 67, 214, 0.55);
+  box-shadow: 0 8px 32px rgba(31, 38, 135, 0.18);
+}
+
+/* The magnifier must stay clearly legible on top of the glass, so it is drawn
+   as a solid-stroke SVG rather than a low-contrast icon font glyph. */
+.video-search-icon {
+  flex: 0 0 auto;
+  fill: none;
+  stroke: #1d2440;
+  stroke-width: 2.2;
+  stroke-linecap: round;
+  opacity: .9;
+}
+
+.video-search:focus-within .video-search-icon {
+  stroke: #2243d6;
+  opacity: 1;
+}
+
+.video-search input {
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  box-shadow: none;
+  font-size: 14px;
+  color: #1d2440;
+}
+
+.video-search input::placeholder { color: rgba(29, 36, 64, 0.55); }
+.video-search input::-webkit-search-cancel-button { -webkit-appearance: none; appearance: none; }
+
+.video-search-clear {
+  flex: 0 0 auto;
+  border: 0;
+  background: transparent;
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+  color: rgba(29, 36, 64, 0.6);
+  padding: 0 2px;
+}
+
+.video-search-clear:hover { color: #2243d6; }
+
+.video-search-status {
+  margin: 8px 0 0;
+  text-align: center;
+  font-size: 12px;
+  color: rgba(29, 36, 64, 0.6);
+  min-height: 16px;
+}
+
+.video-search-empty {
+  text-align: center;
+  padding: 40px 0;
+  color: rgba(29, 36, 64, 0.65);
+}
+
+/* On the dark home slider area the field sits over imagery, so lift contrast */
+#contents .video-search input { color: #1d2440; }
+
+/* ---------------------------------------------------------------
+   "All episodes" button — glass pill replacing the old black button
+------------------------------------------------------------------*/
+.btn.btn-channel-more {
+  border-radius: 999px;
+  padding: 0 26px;
+  color: #1d2440;
+  background-color: rgba(255, 255, 255, 0.18);
+  -webkit-backdrop-filter: blur(16px) saturate(180%);
+  backdrop-filter: blur(16px) saturate(180%);
+  border: 1px solid rgba(29, 36, 64, 0.25);
+  box-shadow: 0 6px 22px rgba(31, 38, 135, 0.12);
+  transition: background-color .25s ease, border-color .25s ease, color .25s ease;
+}
+
+.btn.btn-channel-more:hover,
+.btn.btn-channel-more:focus {
+  color: #fff;
+  background-color: rgba(34, 67, 214, 0.9);
+  border-color: rgba(34, 67, 214, 0.9);
+}
+
+/* ---------------------------------------------------------------
+   Dedicated channel pages
+------------------------------------------------------------------*/
+.channel-hero {
+  padding: 60px 0 40px;
+  background: linear-gradient(140deg, #eef2ff 0%, #f7f9fb 60%, #eaf7f1 100%);
+}
+
+.channel-hero-eyebrow {
+  font-size: 12px;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: rgba(29, 36, 64, 0.55);
+  margin-bottom: 10px;
+}
+
+.channel-hero-eyebrow a { color: inherit; }
+.channel-hero-eyebrow a:hover { color: #2243d6; }
+
+.channel-hero-title {
+  margin: 0 0 12px;
+  font-size: 38px;
+  color: #1d2440;
+}
+
+.channel-hero-intro {
+  max-width: 680px;
+  margin: 0;
+  color: rgba(29, 36, 64, 0.75);
+}
+
+.channel-videos { padding: 45px 0 80px; }
+
+.video-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 22px;
+}
+
+.video-card {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border-radius: 16px;
+  background-color: rgba(255, 255, 255, 0.55);
+  -webkit-backdrop-filter: blur(18px) saturate(180%);
+  backdrop-filter: blur(18px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  box-shadow: 0 8px 32px rgba(31, 38, 135, 0.1);
+  transition: transform .25s ease, box-shadow .25s ease;
+}
+
+.video-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 14px 40px rgba(31, 38, 135, 0.16);
+}
+
+/* aspect-ratio rather than the padding-top percentage hack: the theme's
+   plugins.css ships an .embed-responsive rule that also targets iframes with
+   absolute positioning, and the two interacted to double the frame height and
+   push the player below its own box. This needs no absolute positioning. */
+.video-card-frame {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  background: #0d1020;
+}
+
+.video-card-frame iframe {
+  display: block;
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
+
+.video-card-body { padding: 18px 20px 22px; }
+
+.video-card-title {
+  margin: 0 0 10px;
+  font-size: 16px;
+  color: #1d2440;
+}
+
+.video-card-summary {
+  margin: 0 0 14px;
+  font-size: 13.5px;
+  line-height: 1.7;
+  color: rgba(29, 36, 64, 0.78);
+}
+
+.video-card-questions {
+  margin: 0;
+  padding-left: 18px;
+  font-size: 13px;
+  color: rgba(29, 36, 64, 0.6);
+}
+
+.video-card-questions li { margin-bottom: 4px; }
+
+.channel-back { text-align: center; margin-top: 45px; }
+
+@media (max-width: 767px) {
+  .channel-hero { padding: 40px 0 30px; }
+  .channel-hero-title { font-size: 28px; }
+  .video-grid { grid-template-columns: 1fr; }
+}

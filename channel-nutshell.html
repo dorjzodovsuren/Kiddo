@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="mn">
+
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+    <meta name="description" content="Kurzgesagt – In a Nutshell сувгийн бүх орчуулсан бичлэг — KidDo">
+    <link rel="icon" type="image/png" href="images/favicon.png">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>KidDo | Kurzgesagt – In a Nutshell</title>
+    <link href="css/plugins.css" rel="stylesheet">
+    <link href="css/style.css" rel="stylesheet">
+    <link href="css/custom.css" rel="stylesheet">
+</head>
+
+<body>
+    <div class="body-inner">
+        <!-- Header -->
+        <header id="header" data-fullwidth="true" class="submenu-light">
+            <div class="header-inner">
+                <div class="container">
+                    <!--Logo-->
+                    <div id="logo">
+                        <a href="index.html">
+                            <span class="logo-default">KidDo</span>
+                            <span class="logo-dark">Kid<b style="color:#2243d6;">Do</b></span>
+                        </a>
+                    </div>
+                    <!--End: Logo-->
+
+                    <!--Navigation Resposnive Trigger-->
+                    <div id="mainMenu-trigger">
+                        <a class="lines-button x"><span class="lines"></span></a>
+                    </div>
+                    <!--end: Navigation Resposnive Trigger-->
+                    <!--Navigation-->
+                    <div id="mainMenu">
+                        <div class="container">
+                            <nav>
+                                <ul>
+                                    <li><a href="index.html">Үндсэн хуудас</a></li>
+                                    <li class="dropdown"><a href="#">Бичлэгүүд</a>
+                                        <ul class="dropdown-menu">
+                                            <li class="dropdown-submenu"><a href="#">In a Nutshell<span class="badge badge-danger" style="background-color:#2dd87a;">+16</span></a>
+                                                <ul class="dropdown-menu">
+                                                    <li><a href="header.html">Season #1</a></li>
+                                                    <li><a href="header-dark.html">Season #2</a></li>
+                                                    <li><a href="header-transparent.html">Season #3</a></li>
+                                                </ul>
+                                            </li>
+                                            <li class="dropdown-submenu"><a href="#">The Brain Scoop<span class="badge badge-danger" style="background-color:#2dd87a;">+16</span></a>
+                                                <ul class="dropdown-menu">
+                                                    <li><a href="header.html">Season #1</a></li>
+                                                    <li><a href="header-dark.html">Season #2</a></li>
+                                                    <li><a href="header-transparent.html">Season #3</a></li>
+                                                </ul>
+                                            </li>
+                                            <li class="dropdown-submenu"><a href="#">The School of Life <span class="badge badge-danger" style="background-color:#d5d83c;">+12</span></a>
+                                                <ul class="dropdown-menu">
+                                                    <li><a href="header.html">Season #1</a></li>
+                                                    <li><a href="header-dark.html">Season #2</a></li>
+                                                    <li><a href="header-transparent.html">Season #3</a></li>
+                                                </ul>
+                                            </li>
+                                        </ul>
+                                    </li>
+                                    <li class="dropdown scroll-to"><a href="#kiddoteam">БИД ХЭН БЭ <b style="color:rgb(111, 204, 165)">?</b></a>
+                                        <ul class="dropdown-menu">
+                                            <li><a href="about.html">Бидний тухай</a></li>
+                                            <li><a href="team.html"><b>KidDo</b>-н хамт олон<span class="badge badge-danger" style="background-color:#0f88f1;">БИД</span></a></li>
+                                            <li><a href="contact.html">Холбоо барих</a></li>
+                                        </ul>
+                                    </li>
+                                </ul>
+                            </nav>
+                        </div>
+                    </div>
+                    <!--end: Navigation-->
+                </div>
+            </div>
+        </header>
+        <!-- end: Header -->
+        <section class="channel-hero">
+            <div class="container">
+                <p class="channel-hero-eyebrow"><a href="index.html">Үндсэн хуудас</a> / Бичлэгүүд</p>
+                <h1 class="channel-hero-title">Kurzgesagt – In a Nutshell</h1>
+                <p class="channel-hero-intro">Орчлон ертөнц, шинжлэх ухаан, ирээдүйн тухай төвөгтэй сэдвүүдийг хөөрхөн дүрслэл, ойлгомжтой хэлээр тайлбарладаг суваг.</p>
+            </div>
+        </section>
+
+        <section class="channel-videos">
+            <div class="container">
+                <div class="video-search-wrap">
+                    <div class="video-search">
+                        <svg class="video-search-icon" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false">
+                            <circle cx="11" cy="11" r="7"></circle>
+                            <line x1="16.5" y1="16.5" x2="21" y2="21"></line>
+                        </svg>
+                        <input id="videoSearch" type="search" autocomplete="off" placeholder="Түлхүүр үгээр бичлэг хайх" aria-label="Бичлэг хайх">
+                        <button type="button" class="video-search-clear" aria-label="Хайлтыг цэвэрлэх" hidden>&times;</button>
+                    </div>
+                    <p class="video-search-status" role="status" aria-live="polite"></p>
+                </div>
+                <div class="video-grid">
+                <article class="video-card" data-video-title="ҮЛЭМЖ ЗАЛУУС" data-video-keywords="ҮЛЭМЖ ЗАЛУУС 66 сая жилийн өмнө, магадгүй Мягмар гаргийн үдээс хойш, амьдрал хэвийнээрээ буюу 1000 жилийн өмнөх шигээ, бүр яривал 1 сая жилийн өмнөх шиг хэвээрээ үргэлжилсээр л байлаа. Бүх зүйл өдтэй үлэг гүрвэл залуустаа амьдрахад таатай сайхан байв. Гэвч энэ нь тэнгэрт нэгэн жижиг туяа харагдах хүртэл л үргэлжилсэн юм. Тэр өдөр арав орчим километрийн голчтой астероид дэлхийд мөргөж, дэлхийн түүхэн дэх хамгийн аймшигт өдөр эхэлсэн. Мөргөлдөөний дараа тэнгэр гал болон шатаж, улмаар олон жил үргэлжилсэн харанхуй, хүйтэн эрин ирсэн. Ингээд 165 сая жил дэлхийг захирсан үлэг гүрвэлийн эрин төгсөж, хөхтөн амьтдын — эцсийн эцэст бидний — цаг үе эхэлсэн билээ. Яагаад үлэмж биетэй, хүчирхэг үлэг гүрвэл устаж үгүй болсон юм бол? Тэр өдөр дэлхий дээр яг юу болсон бэ?">
+                    <div class="video-card-frame">
+                        <iframe src="https://www.youtube.com/embed/dFCbJmgeHmA" title="ҮЛЭМЖ ЗАЛУУС" loading="lazy" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                    </div>
+                    <div class="video-card-body">
+                        <h3 class="video-card-title">ҮЛЭМЖ ЗАЛУУС</h3>
+                        <p class="video-card-summary">66 сая жилийн өмнө, магадгүй Мягмар гаргийн үдээс хойш, амьдрал хэвийнээрээ буюу 1000 жилийн өмнөх шигээ, бүр яривал 1 сая жилийн өмнөх шиг хэвээрээ үргэлжилсээр л байлаа. Бүх зүйл өдтэй үлэг гүрвэл залуустаа амьдрахад таатай сайхан байв. Гэвч энэ нь тэнгэрт нэгэн жижиг туяа харагдах хүртэл л үргэлжилсэн юм. Тэр өдөр арав орчим километрийн голчтой астероид дэлхийд мөргөж, дэлхийн түүхэн дэх хамгийн аймшигт өдөр эхэлсэн. Мөргөлдөөний дараа тэнгэр гал болон шатаж, улмаар олон жил үргэлжилсэн харанхуй, хүйтэн эрин ирсэн. Ингээд 165 сая жил дэлхийг захирсан үлэг гүрвэлийн эрин төгсөж, хөхтөн амьтдын — эцсийн эцэст бидний — цаг үе эхэлсэн билээ.</p>
+                        <ul class="video-card-questions">
+                            <li>Яагаад үлэмж биетэй, хүчирхэг үлэг гүрвэл устаж үгүй болсон юм бол?</li>
+                            <li>Тэр өдөр дэлхий дээр яг юу болсон бэ?</li>
+                        </ul>
+                    </div>
+                </article>
+                <article class="video-card" data-video-title="АМЬДРАЛЫН СҮҮЛЧИЙН ХЭСЭГ" data-video-keywords="АМЬДРАЛЫН СҮҮЛЧИЙН ХЭСЭГ Хүний амьдралыг өдөр, долоо хоног, жилээр нь дүрслэн харвал гайхалтай зүйл ойлгогддог. Насанд хүрснийхээ дараа бид эцэг эхтэйгээ хамт өнгөрүүлэх хугацааныхаа ихэнхийг аль хэдийн ард үлдээсэн байдаг. Хайртай хүмүүстэйгээ хамт өнгөрүүлэх боломжтой зун, хамтдаа уух аяга цай, хамтдаа хийх яриа хэдэн ширхэг үлдсэнийг тоолж үзвэл цаг хугацааны үнэ цэн тэс өөрөөр харагдана. Энэхүү бичлэг үлдсэн хугацаагаа хэнтэй, хэрхэн өнгөрүүлэхээ ухамсартай сонгохыг сануулж байна. Хайртай хүмүүстэйгээ хамт өнгөрүүлэх хугацаа хэр үлдсэн бол? Цагаа юунд зарцуулах нь хамгийн үнэ цэнтэй вэ?">
+                    <div class="video-card-frame">
+                        <iframe src="https://www.youtube.com/embed/JXeJANDKwDc" title="АМЬДРАЛЫН СҮҮЛЧИЙН ХЭСЭГ" loading="lazy" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                    </div>
+                    <div class="video-card-body">
+                        <h3 class="video-card-title">АМЬДРАЛЫН СҮҮЛЧИЙН ХЭСЭГ</h3>
+                        <p class="video-card-summary">Хүний амьдралыг өдөр, долоо хоног, жилээр нь дүрслэн харвал гайхалтай зүйл ойлгогддог. Насанд хүрснийхээ дараа бид эцэг эхтэйгээ хамт өнгөрүүлэх хугацааныхаа ихэнхийг аль хэдийн ард үлдээсэн байдаг. Хайртай хүмүүстэйгээ хамт өнгөрүүлэх боломжтой зун, хамтдаа уух аяга цай, хамтдаа хийх яриа хэдэн ширхэг үлдсэнийг тоолж үзвэл цаг хугацааны үнэ цэн тэс өөрөөр харагдана. Энэхүү бичлэг үлдсэн хугацаагаа хэнтэй, хэрхэн өнгөрүүлэхээ ухамсартай сонгохыг сануулж байна.</p>
+                        <ul class="video-card-questions">
+                            <li>Хайртай хүмүүстэйгээ хамт өнгөрүүлэх хугацаа хэр үлдсэн бол?</li>
+                            <li>Цагаа юунд зарцуулах нь хамгийн үнэ цэнтэй вэ?</li>
+                        </ul>
+                    </div>
+                </article>
+                <article class="video-card" data-video-title="ЭРГЭЛДЭГЧ ХАР НҮХ" data-video-keywords="ЭРГЭЛДЭГЧ ХАР НҮХ Хар нүх бол орчлон ертөнц дэх хамгийн хүчирхэг, тийм хэрнээ итгэхийн аргагүй нууцлаг биет юм. Хэрэв хэн нэгэн хар нүхэнд ойртвол яах бол? Бас хар нүх гэж яг юу юм бэ? Эргэлдэгч хар нүх нь зөвхөн гэрлийг өөртөө татаад зогсохгүй, эргэн тойрныхоо орон зай, цаг хугацааг хамтад нь мушгин эргүүлдэг. Үйл явдлын хүрээ буюу эргэж буцах боломжгүй хилийг давсны дараа юу болохыг энэхүү бичлэгээс үзээрэй. Яагаад заавал хар нүх гэж? Юугаараа бусдаас тийм өөр юм бол?">
+                    <div class="video-card-frame">
+                        <iframe src="https://www.youtube.com/embed/QqsLTNkzvaY" title="ЭРГЭЛДЭГЧ ХАР НҮХ" loading="lazy" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                    </div>
+                    <div class="video-card-body">
+                        <h3 class="video-card-title">ЭРГЭЛДЭГЧ ХАР НҮХ</h3>
+                        <p class="video-card-summary">Хар нүх бол орчлон ертөнц дэх хамгийн хүчирхэг, тийм хэрнээ итгэхийн аргагүй нууцлаг биет юм. Хэрэв хэн нэгэн хар нүхэнд ойртвол яах бол? Бас хар нүх гэж яг юу юм бэ? Эргэлдэгч хар нүх нь зөвхөн гэрлийг өөртөө татаад зогсохгүй, эргэн тойрныхоо орон зай, цаг хугацааг хамтад нь мушгин эргүүлдэг. Үйл явдлын хүрээ буюу эргэж буцах боломжгүй хилийг давсны дараа юу болохыг энэхүү бичлэгээс үзээрэй.</p>
+                        <ul class="video-card-questions">
+                            <li>Яагаад заавал хар нүх гэж?</li>
+                            <li>Юугаараа бусдаас тийм өөр юм бол?</li>
+                        </ul>
+                    </div>
+                </article>
+                <article class="video-card" data-video-title="ӨТ НҮХ" data-video-keywords="ӨТ НҮХ Өт нүх бол орон зай, цаг хугацааны хоёр өөр цэгийг холбож болох онолын гарц юм. Хэрэв тэдгээр үнэхээр оршин байдаг бол хэдэн сая гэрлийн жилийн зайг хормын дотор туулах боломж нээгдэнэ. Эйнштейний харьцангуйн онол ийм гарц оршин байхыг зарчмын хувьд зөвшөөрдөг ч, түүнийг нээлттэй байлгахад бидний мэдэх матераас тэс өөр шинж чанартай зүйл шаардлагатай болдог. Энэхүү бичлэгээс өт нүх гэж юу болох, шинжлэх ухаан түүнийг хэр боломжтой гэж үздэгийг тайлбарлана. Өт нүхээр аялах боломжтой юу? Шинжлэх ухаан энэ тухай юу гэж хэлдэг вэ?">
+                    <div class="video-card-frame">
+                        <iframe src="https://www.youtube.com/embed/9P6rdqiybaw" title="ӨТ НҮХ" loading="lazy" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                    </div>
+                    <div class="video-card-body">
+                        <h3 class="video-card-title">ӨТ НҮХ</h3>
+                        <p class="video-card-summary">Өт нүх бол орон зай, цаг хугацааны хоёр өөр цэгийг холбож болох онолын гарц юм. Хэрэв тэдгээр үнэхээр оршин байдаг бол хэдэн сая гэрлийн жилийн зайг хормын дотор туулах боломж нээгдэнэ. Эйнштейний харьцангуйн онол ийм гарц оршин байхыг зарчмын хувьд зөвшөөрдөг ч, түүнийг нээлттэй байлгахад бидний мэдэх матераас тэс өөр шинж чанартай зүйл шаардлагатай болдог. Энэхүү бичлэгээс өт нүх гэж юу болох, шинжлэх ухаан түүнийг хэр боломжтой гэж үздэгийг тайлбарлана.</p>
+                        <ul class="video-card-questions">
+                            <li>Өт нүхээр аялах боломжтой юу?</li>
+                            <li>Шинжлэх ухаан энэ тухай юу гэж хэлдэг вэ?</li>
+                        </ul>
+                    </div>
+                </article>
+                </div>
+                <p class="video-search-empty" hidden>Таны хайсан түлхүүр үгэнд тохирох бичлэг олдсонгүй.</p>
+                <div class="channel-back">
+                    <a href="index.html" class="btn btn-channel-more">Бусад суваг үзэх</a>
+                </div>
+            </div>
+        </section>
+
+        <!-- Footer -->
+        <footer id="footer">
+            <div class="footer-content">
+                <div class="container">
+                    <div class="row">
+                        <div class="col-lg-7">
+                            <div class="row">
+                                <div class="col-lg-3">
+                                    <div class="widget">
+                                        <div class="widget-title">БИД ХЭН БЭ ?</div>
+                                        <ul class="list">
+                                            <li><a href="#">Бидний тухай</a></li>
+                                            <li><a href="#">KidDo-ийн хамт олон</a></li>
+                                            <li><a href="#">Холбоо барих</a></li>
+                                        </ul>
+                                    </div>
+                                </div>
+                                <div class="col-lg-3">
+                                    <div class="widget">
+                                        <div class="widget-title">Бичлэгүүд</div>
+                                        <ul class="list">
+                                            <li><a href="#">In a Nutshell</a></li>
+                                            <li><a href="#">The Brain Scoop</a></li>
+                                            <li><a href="#">The school of Life</a></li>
+                                        </ul>
+                                    </div>
+                                </div>
+                                <div class="col-lg-3">
+                                    <div class="widget">
+                                        <div class="widget-title">Бид туслая</div>
+                                        <ul class="list">
+                                            <li><a href="#">Харилцан цонх</a></li>
+                                            <li><a href="#">Баримт бичиг</a></li>
+                                            <li><a href="#">Холбоо барих</a></li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="copyright-content">
+                <div class="container">
+                    <div class="copyright-text text-center">&copy; 2021 by <a href="https://dorjzodovsuren.com"><b>IBDZS</b></a> All Rights Reserved</div>
+                </div>
+            </div>
+        </footer>
+        <!-- end: Footer -->
+    </div>
+    <a id="scrollTop"><i class="icon-chevron-up"></i><i class="icon-chevron-up"></i></a>
+    <script src="js/jquery.js"></script>
+    <script src="js/plugins.js"></script>
+    <script src="js/functions.js"></script>
+    <script src="js/video-search.js"></script>
+</body>
+
+</html>

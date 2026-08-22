@@ -34,7 +34,7 @@ jobs:
           retention-days: 14
 
   html-validate:
-    name: HTML markup check (report only)
+    name: HTML markup check
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -46,11 +46,9 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Validate index.html
-        # Non-blocking: the template carries ~40 pre-existing invalid-nesting
-        # issues (clickable cards wrapping <a> and <iframe> for a lightbox
-        # trigger) that are a template design pattern, not new regressions.
-        # This job reports so new markup issues are visible without blocking
-        # merges on that existing debt.
-        continue-on-error: true
+      - name: Validate markup
+        # Now blocking. The ~40 pre-existing nesting errors (cards wrapped in a
+        # hrefless <a> that made every inner link and iframe illegal) were
+        # cleared when the video cards were rebuilt, so index.html and the
+        # channel pages validate clean and regressions should fail the build.
         run: npm run test:html

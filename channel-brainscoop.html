@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="mn">
+
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+    <meta name="description" content="The Brain Scoop сувгийн бүх орчуулсан бичлэг — KidDo">
+    <link rel="icon" type="image/png" href="images/favicon.png">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>KidDo | The Brain Scoop</title>
+    <link href="css/plugins.css" rel="stylesheet">
+    <link href="css/style.css" rel="stylesheet">
+    <link href="css/custom.css" rel="stylesheet">
+</head>
+
+<body>
+    <div class="body-inner">
+        <!-- Header -->
+        <header id="header" data-fullwidth="true" class="submenu-light">
+            <div class="header-inner">
+                <div class="container">
+                    <!--Logo-->
+                    <div id="logo">
+                        <a href="index.html">
+                            <span class="logo-default">KidDo</span>
+                            <span class="logo-dark">Kid<b style="color:#2243d6;">Do</b></span>
+                        </a>
+                    </div>
+                    <!--End: Logo-->
+
+                    <!--Navigation Resposnive Trigger-->
+                    <div id="mainMenu-trigger">
+                        <a class="lines-button x"><span class="lines"></span></a>
+                    </div>
+                    <!--end: Navigation Resposnive Trigger-->
+                    <!--Navigation-->
+                    <div id="mainMenu">
+                        <div class="container">
+                            <nav>
+                                <ul>
+                                    <li><a href="index.html">Үндсэн хуудас</a></li>
+                                    <li class="dropdown"><a href="#">Бичлэгүүд</a>
+                                        <ul class="dropdown-menu">
+                                            <li class="dropdown-submenu"><a href="#">In a Nutshell<span class="badge badge-danger" style="background-color:#2dd87a;">+16</span></a>
+                                                <ul class="dropdown-menu">
+                                                    <li><a href="header.html">Season #1</a></li>
+                                                    <li><a href="header-dark.html">Season #2</a></li>
+                                                    <li><a href="header-transparent.html">Season #3</a></li>
+                                                </ul>
+                                            </li>
+                                            <li class="dropdown-submenu"><a href="#">The Brain Scoop<span class="badge badge-danger" style="background-color:#2dd87a;">+16</span></a>
+                                                <ul class="dropdown-menu">
+                                                    <li><a href="header.html">Season #1</a></li>
+                                                    <li><a href="header-dark.html">Season #2</a></li>
+                                                    <li><a href="header-transparent.html">Season #3</a></li>
+                                                </ul>
+                                            </li>
+                                            <li class="dropdown-submenu"><a href="#">The School of Life <span class="badge badge-danger" style="background-color:#d5d83c;">+12</span></a>
+                                                <ul class="dropdown-menu">
+                                                    <li><a href="header.html">Season #1</a></li>
+                                                    <li><a href="header-dark.html">Season #2</a></li>
+                                                    <li><a href="header-transparent.html">Season #3</a></li>
+                                                </ul>
+                                            </li>
+                                        </ul>
+                                    </li>
+                                    <li class="dropdown scroll-to"><a href="#kiddoteam">БИД ХЭН БЭ <b style="color:rgb(111, 204, 165)">?</b></a>
+                                        <ul class="dropdown-menu">
+                                            <li><a href="about.html">Бидний тухай</a></li>
+                                            <li><a href="team.html"><b>KidDo</b>-н хамт олон<span class="badge badge-danger" style="background-color:#0f88f1;">БИД</span></a></li>
+                                            <li><a href="contact.html">Холбоо барих</a></li>
+                                        </ul>
+                                    </li>
+                                </ul>
+                            </nav>
+                        </div>
+                    </div>
+                    <!--end: Navigation-->
+                </div>
+            </div>
+        </header>
+        <!-- end: Header -->
+        <section class="channel-hero">
+            <div class="container">
+                <p class="channel-hero-eyebrow"><a href="index.html">Үндсэн хуудас</a> / Бичлэгүүд</p>
+                <h1 class="channel-hero-title">The Brain Scoop</h1>
+                <p class="channel-hero-intro">Байгалийн түүхийн музейн хөшигний ард юу болдгийг, амьтан судлал, чихмэл бэлтгэх урлаг, олдворуудын түүхийг сонирхолтойгоор өгүүлдэг суваг.</p>
+            </div>
+        </section>
+
+        <section class="channel-videos">
+            <div class="container">
+                <div class="video-search-wrap">
+                    <div class="video-search">
+                        <svg class="video-search-icon" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false">
+                            <circle cx="11" cy="11" r="7"></circle>
+                            <line x1="16.5" y1="16.5" x2="21" y2="21"></line>
+                        </svg>
+                        <input id="videoSearch" type="search" autocomplete="off" placeholder="Түлхүүр үгээр бичлэг хайх" aria-label="Бичлэг хайх">
+                        <button type="button" class="video-search-clear" aria-label="Хайлтыг цэвэрлэх" hidden>&times;</button>
+                    </div>
+                    <p class="video-search-status" role="status" aria-live="polite"></p>
+                </div>
+                <div class="video-grid">
+                <article class="video-card" data-video-title="МУЗЕЙН ХӨШИГНИЙ АРД" data-video-keywords="МУЗЕЙН ХӨШИГНИЙ АРД Байгалийн түүхийн музейд зочид үзэж буй үзмэрүүд нь цуглуулгын өчүүхэн хэсэг нь юм. Хөшигний ард нь сая сая олдвор хадгалагдаж, судлаачид тэдгээрийг ангилан, тэмдэглэн, судалсаар байдаг. Энэхүү бичлэгээс музейн ажилтнууд олдвор бүрийг хэрхэн хадгалж, судалдаг, мөн тэдгээр нь байгалийн түүхийг ойлгоход яагаад чухал болохыг харуулна. Музейн агуулахад юу нуугдаж байдаг вэ? Олдворуудыг хэрхэн хадгалдаг вэ?">
+                    <div class="video-card-frame">
+                        <iframe src="https://www.youtube.com/embed/zPU4xU00vlU" title="МУЗЕЙН ХӨШИГНИЙ АРД" loading="lazy" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                    </div>
+                    <div class="video-card-body">
+                        <h3 class="video-card-title">МУЗЕЙН ХӨШИГНИЙ АРД</h3>
+                        <p class="video-card-summary">Байгалийн түүхийн музейд зочид үзэж буй үзмэрүүд нь цуглуулгын өчүүхэн хэсэг нь юм. Хөшигний ард нь сая сая олдвор хадгалагдаж, судлаачид тэдгээрийг ангилан, тэмдэглэн, судалсаар байдаг. Энэхүү бичлэгээс музейн ажилтнууд олдвор бүрийг хэрхэн хадгалж, судалдаг, мөн тэдгээр нь байгалийн түүхийг ойлгоход яагаад чухал болохыг харуулна.</p>
+                        <ul class="video-card-questions">
+                            <li>Музейн агуулахад юу нуугдаж байдаг вэ?</li>
+                            <li>Олдворуудыг хэрхэн хадгалдаг вэ?</li>
+                        </ul>
+                    </div>
+                </article>
+                <article class="video-card" data-video-title="АМЬТНЫ ЯС ЮУ ӨГҮҮЛДЭГ ВЭ" data-video-keywords="АМЬТНЫ ЯС ЮУ ӨГҮҮЛДЭГ ВЭ Амьтны яс бол зүгээр нэг үлдэгдэл биш, харин тухайн амьтны амьдралын түүхийг хадгалсан бичиг юм. Ясны хэлбэр, хэмжээ, гадаргуугийн ул мөрөөс тэр амьтан юу иддэг байсан, хэрхэн хөдөлдөг байсан, ямар орчинд амьдарч байсныг судлаачид тогтоож чаддаг. Энэхүү бичлэгээс араг ясыг уншиж, амьтдын амьдралыг сэргээн харах арга барилтай танилцана. Яснаас ямар мэдээлэл олж авах вэ? Судлаачид үүнийг яаж тогтоодог вэ?">
+                    <div class="video-card-frame">
+                        <iframe src="https://www.youtube.com/embed/6vOzt-YQjIA" title="АМЬТНЫ ЯС ЮУ ӨГҮҮЛДЭГ ВЭ" loading="lazy" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                    </div>
+                    <div class="video-card-body">
+                        <h3 class="video-card-title">АМЬТНЫ ЯС ЮУ ӨГҮҮЛДЭГ ВЭ</h3>
+                        <p class="video-card-summary">Амьтны яс бол зүгээр нэг үлдэгдэл биш, харин тухайн амьтны амьдралын түүхийг хадгалсан бичиг юм. Ясны хэлбэр, хэмжээ, гадаргуугийн ул мөрөөс тэр амьтан юу иддэг байсан, хэрхэн хөдөлдөг байсан, ямар орчинд амьдарч байсныг судлаачид тогтоож чаддаг. Энэхүү бичлэгээс араг ясыг уншиж, амьтдын амьдралыг сэргээн харах арга барилтай танилцана.</p>
+                        <ul class="video-card-questions">
+                            <li>Яснаас ямар мэдээлэл олж авах вэ?</li>
+                            <li>Судлаачид үүнийг яаж тогтоодог вэ?</li>
+                        </ul>
+                    </div>
+                </article>
+                <article class="video-card" data-video-title="ЗҮЙЛ ЯАЖ АНГИЛАГДДАГ ВЭ" data-video-keywords="ЗҮЙЛ ЯАЖ АНГИЛАГДДАГ ВЭ Дэлхий дээрх сая сая амьд организмыг эмх цэгцтэй ойлгохын тулд эрдэмтэд тэдгээрийг ижил төстэй шинж, гарал үүслээр нь бүлэглэн ангилдаг. Энэ ангилал нь зөвхөн нэр өгөхийн тулд бус, аль амьтан алинтайгаа хэр ойр төрөл болохыг харуулдаг. Энэхүү бичлэгээс амьд ертөнцийг ангилах шинжлэх ухаан хэрхэн ажилладаг, шинэ зүйл нээгдэхэд юу болдгийг үзнэ. Амьтдыг яагаад ангилах хэрэгтэй вэ? Шинэ зүйл нээгдвэл яах вэ?">
+                    <div class="video-card-frame">
+                        <iframe src="https://www.youtube.com/embed/D2RLDUn0kgY" title="ЗҮЙЛ ЯАЖ АНГИЛАГДДАГ ВЭ" loading="lazy" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                    </div>
+                    <div class="video-card-body">
+                        <h3 class="video-card-title">ЗҮЙЛ ЯАЖ АНГИЛАГДДАГ ВЭ</h3>
+                        <p class="video-card-summary">Дэлхий дээрх сая сая амьд организмыг эмх цэгцтэй ойлгохын тулд эрдэмтэд тэдгээрийг ижил төстэй шинж, гарал үүслээр нь бүлэглэн ангилдаг. Энэ ангилал нь зөвхөн нэр өгөхийн тулд бус, аль амьтан алинтайгаа хэр ойр төрөл болохыг харуулдаг. Энэхүү бичлэгээс амьд ертөнцийг ангилах шинжлэх ухаан хэрхэн ажилладаг, шинэ зүйл нээгдэхэд юу болдгийг үзнэ.</p>
+                        <ul class="video-card-questions">
+                            <li>Амьтдыг яагаад ангилах хэрэгтэй вэ?</li>
+                            <li>Шинэ зүйл нээгдвэл яах вэ?</li>
+                        </ul>
+                    </div>
+                </article>
+                <article class="video-card" data-video-title="ХЭЭРИЙН СУДАЛГААНЫ ӨДӨР" data-video-keywords="ХЭЭРИЙН СУДАЛГААНЫ ӨДӨР Судлаач бүх зүйлээ лабораторид хийдэггүй. Байгаль дээр гарч, амьтдыг ажиглаж, дээж цуглуулж, тэмдэглэл хөтлөх нь судалгааны хамгийн чухал хэсэг байдаг. Хээрийн ажил нь урьдчилан таамаглах аргагүй бөгөөд цаг агаар, газар нутаг, аз тохиол бүгд нөлөөлдөг. Энэхүү бичлэгээс хээрийн судалгааны нэг өдөр хэрхэн өнгөрдөг, ямар нээлт хийж болохыг харуулна. Хээрийн судалгаа гэж юу вэ? Судлаачид юу цуглуулдаг вэ?">
+                    <div class="video-card-frame">
+                        <iframe src="https://www.youtube.com/embed/buWdVFHYLnI" title="ХЭЭРИЙН СУДАЛГААНЫ ӨДӨР" loading="lazy" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                    </div>
+                    <div class="video-card-body">
+                        <h3 class="video-card-title">ХЭЭРИЙН СУДАЛГААНЫ ӨДӨР</h3>
+                        <p class="video-card-summary">Судлаач бүх зүйлээ лабораторид хийдэггүй. Байгаль дээр гарч, амьтдыг ажиглаж, дээж цуглуулж, тэмдэглэл хөтлөх нь судалгааны хамгийн чухал хэсэг байдаг. Хээрийн ажил нь урьдчилан таамаглах аргагүй бөгөөд цаг агаар, газар нутаг, аз тохиол бүгд нөлөөлдөг. Энэхүү бичлэгээс хээрийн судалгааны нэг өдөр хэрхэн өнгөрдөг, ямар нээлт хийж болохыг харуулна.</p>
+                        <ul class="video-card-questions">
+                            <li>Хээрийн судалгаа гэж юу вэ?</li>
+                            <li>Судлаачид юу цуглуулдаг вэ?</li>
+                        </ul>
+                    </div>
+                </article>
+                </div>
+                <p class="video-search-empty" hidden>Таны хайсан түлхүүр үгэнд тохирох бичлэг олдсонгүй.</p>
+                <div class="channel-back">
+                    <a href="index.html" class="btn btn-channel-more">Бусад суваг үзэх</a>
+                </div>
+            </div>
+        </section>
+
+        <!-- Footer -->
+        <footer id="footer">
+            <div class="footer-content">
+                <div class="container">
+                    <div class="row">
+                        <div class="col-lg-7">
+                            <div class="row">
+                                <div class="col-lg-3">
+                                    <div class="widget">
+                                        <div class="widget-title">БИД ХЭН БЭ ?</div>
+                                        <ul class="list">
+                                            <li><a href="#">Бидний тухай</a></li>
+                                            <li><a href="#">KidDo-ийн хамт олон</a></li>
+                                            <li><a href="#">Холбоо барих</a></li>
+                                        </ul>
+                                    </div>
+                                </div>
+                                <div class="col-lg-3">
+                                    <div class="widget">
+                                        <div class="widget-title">Бичлэгүүд</div>
+                                        <ul class="list">
+                                            <li><a href="#">In a Nutshell</a></li>
+                                            <li><a href="#">The Brain Scoop</a></li>
+                                            <li><a href="#">The school of Life</a></li>
+                                        </ul>
+                                    </div>
+                                </div>
+                                <div class="col-lg-3">
+                                    <div class="widget">
+                                        <div class="widget-title">Бид туслая</div>
+                                        <ul class="list">
+                                            <li><a href="#">Харилцан цонх</a></li>
+                                            <li><a href="#">Баримт бичиг</a></li>
+                                            <li><a href="#">Холбоо барих</a></li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="copyright-content">
+                <div class="container">
+                    <div class="copyright-text text-center">&copy; 2021 by <a href="https://dorjzodovsuren.com"><b>IBDZS</b></a> All Rights Reserved</div>
+                </div>
+            </div>
+        </footer>
+        <!-- end: Footer -->
+    </div>
+    <a id="scrollTop"><i class="icon-chevron-up"></i><i class="icon-chevron-up"></i></a>
+    <script src="js/jquery.js"></script>
+    <script src="js/plugins.js"></script>
+    <script src="js/functions.js"></script>
+    <script src="js/video-search.js"></script>
+</body>
+
+</html>
