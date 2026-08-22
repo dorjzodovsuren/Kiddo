@@ -9,31 +9,33 @@ const AxeBuilder = require('@axe-core/playwright').default;
 // slower than a dev machine.
 test.setTimeout(120000);
 
-test('homepage has no serious or critical accessibility violations', async ({ page }) => {
-  // Block the 12 embedded YouTube players. They contribute nothing to a
-  // first-party a11y audit (axe cannot inject into a cross-origin frame, and
-  // YouTube's own markup is not this repo's to fix) while adding an external
-  // network dependency whose latency varies between local runs and CI.
-  await page.route(/(youtube\.com|youtube-nocookie\.com|ytimg\.com)/, (route) => route.abort());
+for (const target of ['index.html', 'login.html']) {
+  test(`${target} has no serious or critical accessibility violations`, async ({ page }) => {
+    // Block the embedded YouTube players. They contribute nothing to a
+    // first-party a11y audit (axe cannot inject into a cross-origin frame, and
+    // YouTube's own markup is not this repo's to fix) while adding an external
+    // network dependency whose latency varies between local runs and CI.
+    await page.route(/(youtube\.com|youtube-nocookie\.com|ytimg\.com)/, (route) => route.abort());
 
-  await page.goto('/index.html');
+    await page.goto('/' + target);
 
-  const results = await new AxeBuilder({ page })
-    .withTags(['wcag2a', 'wcag2aa'])
-    // color-contrast is excluded here: the homepage's animated slider/video content
-    // shifts foreground/background pairs during a scan, making the rule flaky, and
-    // several theme-wide contrast issues (e.g. muted "team-desc" captions) need a
-    // deliberate design fix rather than a test tweak. Tracked separately.
-    .disableRules(['color-contrast'])
-    .analyze();
+    const results = await new AxeBuilder({ page })
+      .withTags(['wcag2a', 'wcag2aa'])
+      // color-contrast is excluded here: the homepage's animated slider/video content
+      // shifts foreground/background pairs during a scan, making the rule flaky, and
+      // several theme-wide contrast issues (e.g. muted "team-desc" captions) need a
+      // deliberate design fix rather than a test tweak. Tracked separately.
+      .disableRules(['color-contrast'])
+      .analyze();
 
-  const seriousOrWorse = results.violations.filter((v) =>
-    v.impact === 'serious' || v.impact === 'critical'
-  );
+    const seriousOrWorse = results.violations.filter((v) =>
+      v.impact === 'serious' || v.impact === 'critical'
+    );
 
-  const report = seriousOrWorse
-    .map((v) => `- [${v.impact}] ${v.id}: ${v.help} (${v.nodes.length} node(s))`)
-    .join('\n');
+    const report = seriousOrWorse
+      .map((v) => `- [${v.impact}] ${v.id}: ${v.help} (${v.nodes.length} node(s))`)
+      .join('\n');
 
-  expect(seriousOrWorse, `Serious/critical a11y violations found:\n${report}`).toEqual([]);
-});
+    expect(seriousOrWorse, `Serious/critical a11y violations found:\n${report}`).toEqual([]);
+  });
+}

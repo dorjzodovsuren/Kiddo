@@ -8,13 +8,27 @@ const CHANNELS = [
 
 // Third-party players are irrelevant to these assertions and add network
 // variance; block them so the specs test our markup only.
+//
+// These specs cover the full catalogue, so they run signed in — the sign-in
+// gate itself is covered separately in auth-gate.spec.js. Seeding the session
+// via addInitScript makes it present before the page's own scripts run.
 test.beforeEach(async ({ page }) => {
   await page.route(/(youtube\.com|youtube-nocookie\.com|ytimg\.com)/, (r) => r.abort());
+  await page.addInitScript(() => {
+    try {
+      window.localStorage.setItem(
+        'kiddo.session',
+        JSON.stringify({ name: 'Тест', at: Date.now() })
+      );
+    } catch (e) { /* storage unavailable — the gate test covers that path */ }
+  });
 });
 
 test.describe('keyword search', () => {
+  // Count what is actually rendered rather than probing a specific mechanism:
+  // visibility is driven by classes (.is-locked / .is-filtered), not inline styles.
   const visible = (page, sel) =>
-    page.locator(sel).evaluateAll((els) => els.filter((e) => e.style.display !== 'none').length);
+    page.locator(sel).evaluateAll((els) => els.filter((e) => e.offsetParent !== null).length);
 
   test('search field and magnifier icon are rendered and visible', async ({ page }) => {
     await page.goto('/index.html');
@@ -90,7 +104,7 @@ test.describe('per-channel pages', () => {
   test('channel page search narrows the grid', async ({ page }) => {
     await page.goto('/channel-nutshell.html');
     const visible = () =>
-      page.locator('.video-card').evaluateAll((els) => els.filter((e) => e.style.display !== 'none').length);
+      page.locator('.video-card').evaluateAll((els) => els.filter((e) => e.offsetParent !== null).length);
 
     await expect.poll(visible).toBe(4);
     await page.fill('#videoSearch', 'өт нүх');

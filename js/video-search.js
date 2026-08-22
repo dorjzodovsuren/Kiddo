@@ -5,9 +5,10 @@
     - index.html   : filters the theme's .portfolio-item cards
     - channel-*.html: filters the .video-card grid
 
-  Matching is accent-insensitive on case and searches the card's full visible
-  text (title, summary and the question prompts), so a viewer can type either a
-  title word or something from the description.
+  Visibility is expressed with classes rather than inline styles, because the
+  sign-in gate in auth.js also hides cards (.is-locked). Two systems writing
+  element.style.display would clobber each other; two classes compose.
+  A card hidden by the gate is never revealed by a search match.
 */
 (function () {
   "use strict";
@@ -20,8 +21,6 @@
   var status = wrap.querySelector(".video-search-status");
   var empty = document.querySelector(".video-search-empty");
 
-  // Cards to filter, plus the group each belongs to so a channel whose cards
-  // are all filtered out can be hidden along with its heading.
   var cards = [].slice.call(document.querySelectorAll(".video-card, .portfolio-item"));
   if (!cards.length) return;
 
@@ -38,19 +37,25 @@
     var shown = 0;
 
     cards.forEach(function (card, i) {
+      // A locked card stays hidden no matter what the query is.
+      if (card.classList.contains("is-locked")) {
+        card.classList.add("is-filtered");
+        return;
+      }
       var hay = haystacks[i];
       var hit = terms.every(function (t) { return hay.indexOf(t) !== -1; });
-      card.hidden = !hit;
-      card.style.display = hit ? "" : "none";
+      card.classList.toggle("is-filtered", !hit);
       if (hit) shown++;
     });
 
-    // Hide a channel block entirely when none of its cards matched.
+    // Hide a channel block entirely when none of its cards are showing.
     groups.forEach(function (group) {
       var any = [].slice
         .call(group.querySelectorAll(".video-card, .portfolio-item"))
-        .some(function (c) { return c.style.display !== "none"; });
-      group.style.display = any ? "" : "none";
+        .some(function (c) {
+          return !c.classList.contains("is-filtered") && !c.classList.contains("is-locked");
+        });
+      group.classList.toggle("is-filtered", !any);
     });
 
     if (clearBtn) clearBtn.hidden = !terms.length;
@@ -69,7 +74,6 @@
     timer = setTimeout(apply, 120);
   });
 
-  // Enter should not submit anything (the label is not a form).
   input.addEventListener("keydown", function (e) {
     if (e.key === "Enter") e.preventDefault();
     if (e.key === "Escape") { input.value = ""; apply(); }
@@ -82,6 +86,9 @@
       input.focus();
     });
   }
+
+  // Re-run when the gate opens or closes so counts stay truthful.
+  document.addEventListener("kiddo:gatechange", apply);
 
   apply();
 })();

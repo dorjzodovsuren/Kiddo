@@ -284,3 +284,163 @@
   .channel-hero-title { font-size: 28px; }
   .video-grid { grid-template-columns: 1fr; }
 }
+
+/* ---------------------------------------------------------------
+   Sign-in gate: locked cards and the preview-wall notice
+   Visibility is class-driven so the gate (.is-locked) and the search
+   (.is-filtered) never overwrite each other's inline styles.
+------------------------------------------------------------------*/
+.video-card.is-locked,
+.portfolio-item.is-locked,
+.video-card.is-filtered,
+.portfolio-item.is-filtered,
+.post-item.is-filtered {
+  display: none !important;
+}
+
+.video-locked-notice {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  text-align: center;
+  margin: 26px auto 0;
+  padding: 26px 24px;
+  max-width: 560px;
+  border-radius: 16px;
+  background-color: rgba(255, 255, 255, 0.35);
+  -webkit-backdrop-filter: blur(18px) saturate(180%);
+  backdrop-filter: blur(18px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.45);
+  box-shadow: 0 8px 32px rgba(31, 38, 135, 0.1);
+}
+
+.video-locked-icon {
+  fill: none;
+  stroke: #2243d6;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.video-locked-text {
+  margin: 0;
+  font-size: 14px;
+  color: rgba(29, 36, 64, 0.8);
+}
+
+/* ---------------------------------------------------------------
+   Login page
+------------------------------------------------------------------*/
+.login-section {
+  padding: 60px 0 80px;
+  background: linear-gradient(140deg, #eef2ff 0%, #f7f9fb 60%, #eaf7f1 100%);
+  min-height: 70vh;
+}
+
+.login-card {
+  max-width: 430px;
+  margin: 0 auto;
+  padding: 36px 32px 30px;
+  border-radius: 18px;
+  background-color: rgba(255, 255, 255, 0.55);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  box-shadow: 0 10px 40px rgba(31, 38, 135, 0.14);
+}
+
+.login-title {
+  margin: 0 0 8px;
+  font-size: 26px;
+  color: #1d2440;
+}
+
+.login-intro {
+  margin: 0 0 24px;
+  font-size: 14px;
+  color: rgba(29, 36, 64, 0.7);
+}
+
+.login-field { display: block; margin-bottom: 16px; }
+
+.login-label {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 12px;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  color: rgba(29, 36, 64, 0.65);
+}
+
+.login-field input {
+  width: 100%;
+  height: 44px;
+  padding: 0 14px;
+  border-radius: 10px;
+  border: 1px solid rgba(29, 36, 64, 0.2);
+  background: rgba(255, 255, 255, 0.7);
+  font-size: 14px;
+  color: #1d2440;
+  outline: 0;
+  transition: border-color .2s ease, box-shadow .2s ease;
+}
+
+.login-field input:focus {
+  border-color: #2243d6;
+  box-shadow: 0 0 0 3px rgba(34, 67, 214, 0.15);
+}
+
+.login-error {
+  margin: 0 0 14px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: rgba(220, 53, 69, 0.1);
+  border: 1px solid rgba(220, 53, 69, 0.3);
+  color: #a3212e;
+  font-size: 13px;
+}
+
+.btn.btn-login {
+  width: 100%;
+  border-radius: 999px;
+  color: #fff;
+  background-color: #2243d6;
+  border: 1px solid #2243d6;
+}
+
+.btn.btn-login:hover,
+.btn.btn-login:focus {
+  background-color: #1a35ab;
+  border-color: #1a35ab;
+  color: #fff;
+}
+
+.login-already {
+  margin: 0 0 18px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: rgba(45, 216, 122, 0.12);
+  border: 1px solid rgba(45, 216, 122, 0.35);
+  font-size: 13.5px;
+  color: #1d2440;
+}
+
+/* The demo caveat is deliberately prominent: this gate is not real security. */
+.login-demo-note {
+  margin: 20px 0 0;
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: rgba(255, 193, 7, 0.12);
+  border: 1px solid rgba(255, 193, 7, 0.4);
+  font-size: 12px;
+  line-height: 1.7;
+  color: rgba(29, 36, 64, 0.8);
+}
+
+.login-back { margin: 18px 0 0; font-size: 13px; text-align: center; }
+
+@media (max-width: 767px) {
+  .login-section { padding: 40px 0 60px; }
+  .login-card { padding: 28px 22px 24px; }
+}
