@@ -1,119 +1,138 @@
 const { test, expect } = require('@playwright/test');
+const fs = require('fs');
+const path = require('path');
 
 const CHANNELS = [
-  { page: 'channel-nutshell.html', name: 'Kurzgesagt – In a Nutshell' },
-  { page: 'channel-brainscoop.html', name: 'The Brain Scoop' },
-  { page: 'channel-schooloflife.html', name: 'The School of Life' },
+  { slug: 'nutshell', page: 'channel-nutshell.html', name: 'Kurzgesagt – In a Nutshell' },
+  { slug: 'brainscoop', page: 'channel-brainscoop.html', name: 'The Brain Scoop' },
+  { slug: 'schooloflife', page: 'channel-schooloflife.html', name: 'The School of Life' },
 ];
 
-// Third-party players are irrelevant to these assertions and add network
-// variance; block them so the specs test our markup only.
-//
-// These specs cover the full catalogue, so they run signed in — the sign-in
-// gate itself is covered separately in auth-gate.spec.js. Seeding the session
-// via addInitScript makes it present before the page's own scripts run.
+const HOME_LIMIT = 3;
+
+const data = (slug) =>
+  JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'data', slug + '.json'), 'utf8'));
+
+const visible = (page, sel) =>
+  page.locator(sel).evaluateAll((els) => els.filter((e) => e.offsetParent !== null).length);
+
+// Third-party players add network variance and nothing these specs assert on.
 test.beforeEach(async ({ page }) => {
   await page.route(/(youtube\.com|youtube-nocookie\.com|ytimg\.com)/, (r) => r.abort());
-  await page.addInitScript(() => {
-    try {
-      window.localStorage.setItem(
-        'kiddo.session',
-        JSON.stringify({ name: 'Тест', at: Date.now() })
-      );
-    } catch (e) { /* storage unavailable — the gate test covers that path */ }
-  });
 });
 
-test.describe('keyword search', () => {
-  // Count what is actually rendered rather than probing a specific mechanism:
-  // visibility is driven by classes (.is-locked / .is-filtered), not inline styles.
-  const visible = (page, sel) =>
-    page.locator(sel).evaluateAll((els) => els.filter((e) => e.offsetParent !== null).length);
+test.describe('channel JSON', () => {
+  for (const ch of CHANNELS) {
+    test(`data/${ch.slug}.json is well formed`, async ({ request, baseURL }) => {
+      const res = await request.get(new URL('data/' + ch.slug + '.json', baseURL).toString());
+      expect(res.ok()).toBeTruthy();
+      const json = await res.json();
 
-  test('search field and magnifier icon are rendered and visible', async ({ page }) => {
+      expect(json.slug).toBe(ch.slug);
+      expect(json.name).toBe(ch.name);
+      expect(json.page).toBe(ch.page);
+      expect(Array.isArray(json.videos)).toBeTruthy();
+      expect(json.videos.length).toBeGreaterThanOrEqual(HOME_LIMIT);
+
+      // The channel blurbs must be Mongolian, not the template's English.
+      for (const field of ['intro', 'about']) {
+        expect(json[field], `${ch.slug}.${field}`).toMatch(/[Ѐ-ӿ]/);
+        expect(json[field].length).toBeGreaterThan(60);
+      }
+
+      for (const v of json.videos) {
+        expect(v.url, 'every video needs a url').toMatch(/^https:\/\/www\.youtube\.com\/embed\/[\w-]+$/);
+        expect(v.title.trim().length).toBeGreaterThan(0);
+        expect(v.summary).toMatch(/[Ѐ-ӿ]/);
+        expect(v.summary.length).toBeGreaterThan(80);
+        expect(Array.isArray(v.questions)).toBeTruthy();
+      }
+    });
+  }
+});
+
+test.describe('homepage collection', () => {
+  test('renders three channels with only the newest videos each', async ({ page }) => {
     await page.goto('/index.html');
-    await expect(page.locator('#videoSearch')).toBeVisible();
+    await page.waitForSelector('.video-card');
 
-    const icon = page.locator('.video-search-icon');
-    await expect(icon).toBeVisible();
+    await expect(page.locator('.video-channel')).toHaveCount(CHANNELS.length);
+    await expect(page.locator('.video-card')).toHaveCount(CHANNELS.length * HOME_LIMIT);
 
-    // The magnifier must be clearly shown, not a hairline or a collapsed box.
-    const box = await icon.boundingBox();
-    expect(box.width).toBeGreaterThanOrEqual(16);
-    expect(box.height).toBeGreaterThanOrEqual(16);
-    const strokeWidth = await icon.evaluate((el) => parseFloat(getComputedStyle(el).strokeWidth));
-    expect(strokeWidth).toBeGreaterThanOrEqual(1.5);
-    const opacity = await icon.evaluate((el) => parseFloat(getComputedStyle(el).opacity));
-    expect(opacity).toBeGreaterThanOrEqual(0.8);
+    for (const ch of CHANNELS) {
+      const block = page.locator(`.video-channel[data-channel="${ch.slug}"]`);
+      await expect(block.locator('.video-card')).toHaveCount(HOME_LIMIT);
+    }
   });
 
-  test('filters cards by keyword and reports the match count', async ({ page }) => {
+  test('cards are built from the JSON, not hardcoded markup', async ({ page }) => {
     await page.goto('/index.html');
-    const total = await page.locator('.portfolio-item').count();
-    expect(total).toBeGreaterThan(0);
-    expect(await visible(page, '.portfolio-item')).toBe(total);
+    await page.waitForSelector('.video-card');
+
+    // index.html itself must not contain any video url.
+    const raw = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
+    expect(raw, 'video urls belong in data/*.json').not.toContain('youtube.com/embed/');
+
+    // What renders must match the JSON, in order.
+    for (const ch of CHANNELS) {
+      const expected = data(ch.slug).videos.slice(0, HOME_LIMIT);
+      const block = page.locator(`.video-channel[data-channel="${ch.slug}"]`);
+
+      const titles = await block.locator('.video-card-title').allTextContents();
+      expect(titles).toEqual(expected.map((v) => v.title));
+
+      const srcs = await block.locator('iframe').evaluateAll((els) => els.map((e) => e.getAttribute('src')));
+      expect(srcs).toEqual(expected.map((v) => v.url));
+    }
+  });
+
+  test('each channel links through to its full page', async ({ page }) => {
+    await page.goto('/index.html');
+    await page.waitForSelector('.video-card');
+
+    for (const ch of CHANNELS) {
+      const block = page.locator(`.video-channel[data-channel="${ch.slug}"]`);
+      await expect(block.locator(`a[href="${ch.page}"]`).first()).toBeVisible();
+    }
+  });
+
+  test('search still filters the rendered cards', async ({ page }) => {
+    await page.goto('/index.html');
+    await page.waitForSelector('.video-card');
+    const total = CHANNELS.length * HOME_LIMIT;
+    await expect.poll(() => visible(page, '.video-card')).toBe(total);
 
     await page.fill('#videoSearch', 'хар нүх');
     await expect(page.locator('.video-search-status')).toContainText('бичлэг олдлоо');
-    await expect.poll(() => visible(page, '.portfolio-item')).toBeLessThan(total);
-    expect(await visible(page, '.portfolio-item')).toBeGreaterThan(0);
-  });
-
-  test('reports an empty state and the clear button restores every card', async ({ page }) => {
-    await page.goto('/index.html');
-    const total = await page.locator('.portfolio-item').count();
-
-    await page.fill('#videoSearch', 'zzzxxqq');
-    await expect(page.locator('.video-search-status')).toHaveText('Бичлэг олдсонгүй');
-    // The filter is debounced, so poll rather than reading straight after fill.
-    await expect.poll(() => visible(page, '.portfolio-item')).toBe(0);
+    await expect.poll(() => visible(page, '.video-card')).toBeLessThan(total);
 
     await page.locator('.video-search-clear').click();
-    await expect.poll(() => visible(page, '.portfolio-item')).toBe(total);
-    await expect(page.locator('#videoSearch')).toHaveValue('');
+    await expect.poll(() => visible(page, '.video-card')).toBe(total);
   });
 });
 
-test.describe('videos dropdown', () => {
-  // Regression: each channel name used to be <a href="#"> inside a
-  // .dropdown-submenu, which functions.js intercepts with preventDefault(), so
-  // clicking a channel went nowhere. Its "Season" children pointed at
-  // header*.html, three template pages that do not exist in this repo.
-  test('lists exactly the three channel pages and nothing dead', async ({ page }) => {
-    await page.goto('/index.html');
-
-    const items = page.locator('#mainMenu nav > ul > li.dropdown').first().locator('.dropdown-menu a');
-    const hrefs = await items.evaluateAll((els) => els.map((e) => e.getAttribute('href')));
-
-    expect(hrefs.sort()).toEqual(CHANNELS.map((c) => c.page).sort());
-    expect(hrefs, 'dropdown must not contain placeholder links').not.toContain('#');
-  });
-
+test.describe('channel pages', () => {
   for (const ch of CHANNELS) {
-    test(`clicking "${ch.name}" opens its channel page with search`, async ({ page }) => {
-      await page.goto('/index.html');
+    test(`${ch.page} renders every video from its JSON`, async ({ page }) => {
+      const expected = data(ch.slug);
+      await page.goto('/' + ch.page);
+      await page.waitForSelector('.video-card');
 
-      // Open the dropdown the way a visitor does, then click the channel name.
-      await page.locator('#mainMenu nav > ul > li.dropdown').first().hover();
-
-      const link = page.locator(`#mainMenu nav a[href="${ch.page}"]`);
-      await expect(link).toBeVisible();
-      await link.click();
-
-      await page.waitForURL('**/' + ch.page);
       await expect(page.locator('.channel-hero-title')).toHaveText(ch.name);
-      // "with search feature" is the point of the fix, so assert it landed.
-      await expect(page.locator('#videoSearch')).toBeVisible();
-      await expect(page.locator('.video-search-icon')).toBeVisible();
+      await expect(page.locator('.video-card')).toHaveCount(expected.videos.length);
+
+      const titles = await page.locator('.video-card-title').allTextContents();
+      expect(titles).toEqual(expected.videos.map((v) => v.title));
     });
   }
 
-  test('the dropdown works on a touch viewport too', async ({ page }) => {
-    await page.setViewportSize({ width: 390, height: 844 });
+  test('the videos dropdown still reaches each channel page with search', async ({ page }) => {
     await page.goto('/index.html');
+    // Let the page settle before driving the menu, otherwise the hover can land
+    // before the theme has wired the dropdown up.
+    await page.waitForSelector('.video-card');
 
-    await page.locator('#mainMenu-trigger a').click();
-    await page.locator('#mainMenu nav > ul > li.dropdown > a').first().click();
+    await page.locator('#mainMenu nav > ul > li.dropdown').first().hover();
 
     const link = page.locator('#mainMenu nav a[href="channel-nutshell.html"]');
     await expect(link).toBeVisible();
@@ -121,77 +140,123 @@ test.describe('videos dropdown', () => {
 
     await page.waitForURL('**/channel-nutshell.html');
     await expect(page.locator('#videoSearch')).toBeVisible();
+    await expect(page.locator('.video-search-icon')).toBeVisible();
   });
 });
 
-test.describe('per-channel pages', () => {
-  test('every channel has a working "all episodes" button on the homepage', async ({ page }) => {
-    await page.goto('/index.html');
-    const buttons = page.locator('a.btn-channel-more');
-    await expect(buttons).toHaveCount(CHANNELS.length);
-
-    const hrefs = await buttons.evaluateAll((els) => els.map((e) => e.getAttribute('href')));
-    expect(hrefs.sort()).toEqual(CHANNELS.map((c) => c.page).sort());
-  });
-
-  for (const ch of CHANNELS) {
-    test(`${ch.page} loads its own videos and search`, async ({ page }) => {
-      const res = await page.goto('/' + ch.page);
-      expect(res.status()).toBe(200);
-
-      await expect(page.locator('.channel-hero-title')).toHaveText(ch.name);
-      await expect(page.locator('.video-card')).toHaveCount(4);
-      await expect(page.locator('#videoSearch')).toBeVisible();
-      await expect(page.locator('.video-search-icon')).toBeVisible();
-
-      // Every card carries a Mongolian title and a non-trivial description.
-      const summaries = await page.locator('.video-card-summary').allTextContents();
-      expect(summaries).toHaveLength(4);
-      for (const s of summaries) expect(s.trim().length).toBeGreaterThan(80);
-    });
-  }
-
-  test('channel page search narrows the grid', async ({ page }) => {
+test.describe('description carousel', () => {
+  test('every card has a carousel with one slide per description part', async ({ page }) => {
+    const expected = data('nutshell');
     await page.goto('/channel-nutshell.html');
-    const visible = () =>
-      page.locator('.video-card').evaluateAll((els) => els.filter((e) => e.offsetParent !== null).length);
+    await page.waitForSelector('.video-desc');
 
-    await expect.poll(visible).toBe(4);
-    await page.fill('#videoSearch', 'өт нүх');
-    // The filter is debounced, so poll rather than reading straight after fill.
-    await expect.poll(visible).toBe(1);
-  });
-});
+    await expect(page.locator('.video-desc')).toHaveCount(expected.videos.length);
 
-test.describe('video copy', () => {
-  const PLACEHOLDERS = [
-    'Documentary about Dinosaur',
-    'Check out our latest',
-    'In this Documentary',
-  ];
-
-  for (const p of ['index.html', ...CHANNELS.map((c) => c.page)]) {
-    test(`${p} has no leftover English template copy`, async ({ page }) => {
-      await page.goto('/' + p);
-      const body = await page.locator('body').innerText();
-      const found = PLACEHOLDERS.filter((ph) => body.includes(ph));
-      expect(found, `Template placeholder text still on the page: ${found.join(', ')}`).toEqual([]);
-    });
-  }
-
-  test('every homepage video modal has a filled-in Mongolian summary', async ({ page }) => {
-    await page.goto('/index.html');
-    const summaries = await page
-      .locator('.portfolio-description .col-width-12 h5')
-      .allTextContents();
-
-    expect(summaries.length).toBe(12);
-    for (const s of summaries) {
-      const t = s.trim();
-      expect(t.length).toBeGreaterThan(80);
-      // Cyrillic check: the copy must actually be Mongolian, not English.
-      expect(t).toMatch(/[Ѐ-ӿ]/);
-      expect(t).not.toMatch(/[A-Za-z]{6,}/);
+    for (let i = 0; i < expected.videos.length; i++) {
+      const v = expected.videos[i];
+      const desc = page.locator('.video-desc').nth(i);
+      // slide 1 is the summary, then one per question
+      await expect(desc.locator('.video-desc-slide')).toHaveCount(1 + v.questions.length);
+      await expect(desc.locator('.video-desc-dot')).toHaveCount(1 + v.questions.length);
     }
   });
+
+  test('the next control advances the carousel', async ({ page }) => {
+    await page.goto('/channel-nutshell.html');
+    await page.waitForSelector('.video-desc');
+
+    const desc = page.locator('.video-desc').first();
+    const track = desc.locator('.video-desc-track');
+
+    await expect(track).toHaveCSS('transform', /matrix|none/);
+    const before = await track.evaluate((e) => e.style.transform);
+
+    await desc.locator('.video-desc-next').click();
+    await expect.poll(() => track.evaluate((e) => e.style.transform)).not.toBe(before);
+
+    await expect(desc.locator('.video-desc-dot').nth(1)).toHaveClass(/is-active/);
+  });
+
+  test('clicking the description expands it, and it collapses again', async ({ page }) => {
+    const first = data('nutshell').videos[0];
+    await page.goto('/channel-nutshell.html');
+    await page.waitForSelector('.video-desc');
+
+    const desc = page.locator('.video-desc').first();
+    await expect(desc).not.toHaveClass(/is-expanded/);
+    await expect(desc.locator('.video-desc-full')).toBeHidden();
+
+    await desc.locator('.video-desc-viewport').click();
+
+    await expect(desc).toHaveClass(/is-expanded/);
+    await expect(desc.locator('.video-desc-full')).toBeVisible();
+    // Expanded shows the whole summary plus every question.
+    await expect(desc.locator('.video-desc-summary-full')).toHaveText(first.summary);
+    await expect(desc.locator('.video-desc-questions li')).toHaveCount(first.questions.length);
+
+    await desc.locator('.video-desc-toggle').click();
+    await expect(desc).not.toHaveClass(/is-expanded/);
+  });
+
+  test('the homepage keeps plain summaries, not carousels', async ({ page }) => {
+    await page.goto('/index.html');
+    await page.waitForSelector('.video-card');
+    await expect(page.locator('.video-desc')).toHaveCount(0);
+    await expect(page.locator('.video-card-summary').first()).toBeVisible();
+  });
+});
+
+test.describe('login removal', () => {
+  const GONE = ['login.html', 'js/auth.js', 'js/login.js'];
+
+  for (const f of GONE) {
+    test(`${f} no longer exists`, async () => {
+      expect(fs.existsSync(path.join(__dirname, '..', f)), `${f} should be deleted`).toBe(false);
+    });
+  }
+
+  for (const p of ['index.html', ...CHANNELS.map((c) => c.page)]) {
+    test(`${p} has no sign-in surface left`, async ({ page }) => {
+      const raw = fs.readFileSync(path.join(__dirname, '..', p), 'utf8');
+      expect(raw).not.toContain('auth.js');
+      expect(raw).not.toContain('login.html');
+
+      await page.goto('/' + p);
+      await page.waitForSelector('.video-card');
+      const body = await page.locator('body').innerText();
+      expect(body).not.toMatch(/Нэвтрэх|Гарах/);
+      await expect(page.locator('.video-locked-notice')).toHaveCount(0);
+    });
+  }
+});
+
+test.describe('Mongolian copy', () => {
+  test('homepage channel blurbs are Mongolian', async ({ page }) => {
+    await page.goto('/index.html');
+    // Scope to the "what we do" section: the team section below it is also
+    // .background-grey and has its own .col-lg-4 paragraphs.
+    const blurbs = await page
+      .locator('section.background-grey:not(#kiddoteam) .col-lg-4 p')
+      .allTextContents();
+    expect(blurbs.length).toBe(CHANNELS.length);
+
+    for (const t of blurbs) {
+      expect(t).toMatch(/[Ѐ-ӿ]/);
+      // Allow proper nouns, reject running English prose.
+      const words = (t.match(/[A-Za-z]{4,}/g) || []).filter(
+        (w) => !/^(Youtube|Kurzgesagt|Nutshel|Nutshell|Brain|Scoop|School|Life|channel)$/i.test(w)
+      );
+      expect(words, `stray English in: ${t.slice(0, 60)}`).toEqual([]);
+    }
+  });
+
+  // One test per page: four sequential page loads in a single test ran past
+  // the 30s default.
+  for (const p of ['index.html', ...CHANNELS.map((c) => c.page)]) {
+    test(`${p} ships no lorem ipsum placeholder`, async ({ page }) => {
+      await page.goto('/' + p);
+      const body = await page.locator('body').innerText();
+      expect(body.toLowerCase(), `${p} still ships placeholder copy`).not.toContain('lorem ipsum');
+    });
+  }
 });

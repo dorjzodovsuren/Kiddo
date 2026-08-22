@@ -1,14 +1,12 @@
 /*
   KidDo — keyword search for video collections.
 
-  Works on both page shapes without configuration:
-    - index.html   : filters the theme's .portfolio-item cards
-    - channel-*.html: filters the .video-card grid
+  The cards are rendered from JSON by video-data.js, so this waits for the
+  "kiddo:rendered" event before binding and re-reads the cards each time the
+  collection is rebuilt.
 
-  Visibility is expressed with classes rather than inline styles, because the
-  sign-in gate in auth.js also hides cards (.is-locked). Two systems writing
-  element.style.display would clobber each other; two classes compose.
-  A card hidden by the gate is never revealed by a search match.
+  Visibility is expressed with a class (.is-filtered) rather than an inline
+  style, so the rule lives in one place in the stylesheet.
 */
 (function () {
   "use strict";
@@ -21,15 +19,17 @@
   var status = wrap.querySelector(".video-search-status");
   var empty = document.querySelector(".video-search-empty");
 
-  var cards = [].slice.call(document.querySelectorAll(".video-card, .portfolio-item"));
-  if (!cards.length) return;
+  var cards = [];
+  var haystacks = [];
+  var channels = [];
 
-  var haystacks = cards.map(function (card) {
-    return (card.textContent || "").toLowerCase().replace(/\s+/g, " ").trim();
-  });
-
-  // On index.html each channel is a .post-item containing its own grid.
-  var groups = [].slice.call(document.querySelectorAll(".post-item"));
+  function collect() {
+    cards = [].slice.call(document.querySelectorAll(".video-card"));
+    haystacks = cards.map(function (card) {
+      return (card.textContent || "").toLowerCase().replace(/\s+/g, " ").trim();
+    });
+    channels = [].slice.call(document.querySelectorAll(".video-channel"));
+  }
 
   function apply() {
     var q = input.value.toLowerCase().replace(/\s+/g, " ").trim();
@@ -37,11 +37,6 @@
     var shown = 0;
 
     cards.forEach(function (card, i) {
-      // A locked card stays hidden no matter what the query is.
-      if (card.classList.contains("is-locked")) {
-        card.classList.add("is-filtered");
-        return;
-      }
       var hay = haystacks[i];
       var hit = terms.every(function (t) { return hay.indexOf(t) !== -1; });
       card.classList.toggle("is-filtered", !hit);
@@ -49,13 +44,11 @@
     });
 
     // Hide a channel block entirely when none of its cards are showing.
-    groups.forEach(function (group) {
+    channels.forEach(function (channel) {
       var any = [].slice
-        .call(group.querySelectorAll(".video-card, .portfolio-item"))
-        .some(function (c) {
-          return !c.classList.contains("is-filtered") && !c.classList.contains("is-locked");
-        });
-      group.classList.toggle("is-filtered", !any);
+        .call(channel.querySelectorAll(".video-card"))
+        .some(function (c) { return !c.classList.contains("is-filtered"); });
+      channel.classList.toggle("is-filtered", !any);
     });
 
     if (clearBtn) clearBtn.hidden = !terms.length;
@@ -87,8 +80,12 @@
     });
   }
 
-  // Re-run when the gate opens or closes so counts stay truthful.
-  document.addEventListener("kiddo:gatechange", apply);
+  // The collection is rendered asynchronously from JSON.
+  document.addEventListener("kiddo:rendered", function () {
+    collect();
+    apply();
+  });
 
+  collect();
   apply();
 })();

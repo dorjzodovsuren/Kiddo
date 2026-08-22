@@ -9,7 +9,7 @@ const AxeBuilder = require('@axe-core/playwright').default;
 // slower than a dev machine.
 test.setTimeout(120000);
 
-for (const target of ['index.html', 'login.html']) {
+for (const target of ['index.html', 'channel-nutshell.html']) {
   test(`${target} has no serious or critical accessibility violations`, async ({ page }) => {
     // Block the embedded YouTube players. They contribute nothing to a
     // first-party a11y audit (axe cannot inject into a cross-origin frame, and
@@ -18,6 +18,9 @@ for (const target of ['index.html', 'login.html']) {
     await page.route(/(youtube\.com|youtube-nocookie\.com|ytimg\.com)/, (route) => route.abort());
 
     await page.goto('/' + target);
+    // The video cards are rendered from JSON after load; scanning before that
+    // would audit an empty container.
+    await page.waitForSelector('.video-card');
 
     const results = await new AxeBuilder({ page })
       .withTags(['wcag2a', 'wcag2aa'])

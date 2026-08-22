@@ -10,6 +10,8 @@ function isLocal(url) {
 
 test('all local page links and assets referenced by index.html resolve', async ({ page, request, baseURL }) => {
   await page.goto('/index.html');
+  // Channel links are rendered from JSON, so wait for them before collecting.
+  await page.waitForSelector('.video-card');
 
   const refs = await page.evaluate(() => {
     const urls = new Set();
