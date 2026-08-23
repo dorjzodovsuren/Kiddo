@@ -63,10 +63,19 @@
    Keyword search — glass field with an always-visible magnifier
 ------------------------------------------------------------------*/
 .video-search-wrap {
-  max-width: 520px;
+  max-width: 640px;
   margin: 0 auto 34px;
   padding: 0 15px;
 }
+
+/* Search field and the sort toggle sit side by side. */
+.video-search-row {
+  display: flex;
+  align-items: stretch;
+  gap: 10px;
+}
+
+.video-search-row .video-search { flex: 1 1 auto; min-width: 0; }
 
 .video-search {
   display: flex;
@@ -439,4 +448,53 @@
 @media (max-width: 767px) {
   .video-section { padding: 50px 0; }
   .video-channel-head { flex-direction: column; align-items: flex-start; gap: 6px; }
+}
+
+/* ---------------------------------------------------------------
+   Sort-by-date toggle, beside the search field
+------------------------------------------------------------------*/
+.video-sort {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  height: 48px;
+  padding: 0 16px;
+  border-radius: 999px;
+  cursor: pointer;
+  white-space: nowrap;
+  font-size: 12.5px;
+  color: #1d2440;
+  background-color: rgba(255, 255, 255, 0.14);
+  -webkit-backdrop-filter: blur(18px) saturate(180%);
+  backdrop-filter: blur(18px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  box-shadow: 0 8px 32px rgba(31, 38, 135, 0.12);
+  transition: border-color .25s ease, background-color .25s ease, color .25s ease;
+}
+
+.video-sort:hover,
+.video-sort:focus-visible {
+  background-color: rgba(255, 255, 255, 0.24);
+  border-color: rgba(34, 67, 214, 0.5);
+  color: #2243d6;
+}
+
+.video-sort-icon {
+  flex: 0 0 auto;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* Flip the arrow when the order is reversed. */
+.video-sort.is-oldest .video-sort-icon { transform: scaleY(-1); }
+
+.video-sort-label { line-height: 1; }
+
+@media (max-width: 575px) {
+  .video-search-row { flex-direction: column; }
+  .video-sort { width: 100%; justify-content: center; }
 }

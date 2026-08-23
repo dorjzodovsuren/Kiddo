@@ -175,8 +175,7 @@
     block.appendChild(head);
 
     var grid = el("div", "video-grid");
-    var list = limit ? channel.videos.slice(0, limit) : channel.videos;
-    list.forEach(function (v) {
+    orderedVideos(channel, limit, state.sort).forEach(function (v) {
       grid.appendChild(videoCard(v, channel, expandable));
     });
     block.appendChild(grid);
@@ -192,12 +191,124 @@
     return block;
   }
 
+  /* ---------------------------------------------------------------
+     Loading — always fetch the freshest copy
+
+     The JSON is content the site owner replaces; a cached copy means an
+     upload silently does not show up. Two things force a fresh read: the
+     no-store hint bypasses the browser's HTTP cache, and the unique query
+     string makes it a URL no CDN (GitHub Pages included) has seen before, so
+     it cannot answer from its edge cache either. These files are a few KB,
+     so re-fetching per page load is cheap.
+  ------------------------------------------------------------------*/
+  function loadChannel(slug) {
+    var url = "data/" + slug + ".json?t=" + Date.now();
+    return fetch(url, { cache: "no-store" }).then(function (res) {
+      if (!res.ok) throw new Error(slug + ": HTTP " + res.status);
+      return res.json();
+    });
+  }
+
+  /* ---------------------------------------------------------------
+     Sorting by upload date
+
+     Each video may carry a "published" date (ISO "YYYY-MM-DD"). When every
+     video in a channel has one, that is what the sort uses. When any is
+     missing, the sort falls back to the order the videos appear in the JSON,
+     which the file documents as newest first. So the control works today and
+     becomes exact the moment real dates are filled in — it never invents one.
+  ------------------------------------------------------------------*/
+  var SORT_NEWEST = "newest";
+  var SORT_OLDEST = "oldest";
+
+  var state = {
+    channels: [],
+    container: null,
+    limit: 0,
+    expandable: false,
+    sort: SORT_NEWEST,
+  };
+
+  function publishedTime(video) {
+    if (!video || !video.published) return null;
+    var t = Date.parse(video.published);
+    return isNaN(t) ? null : t;
+  }
+
+  function hasFullDates(videos) {
+    return videos.length > 0 && videos.every(function (v) { return publishedTime(v) !== null; });
+  }
+
+  // Newest-first list for a channel, whatever the source ordering.
+  function newestFirst(videos) {
+    if (!hasFullDates(videos)) return videos.slice();
+    return videos.slice().sort(function (a, b) {
+      return publishedTime(b) - publishedTime(a);
+    });
+  }
+
+  function orderedVideos(channel, limit, sort) {
+    // Pick which videos to show *before* applying the display order, so a
+    // homepage limited to 3 always shows the newest 3 — sorting reorders
+    // them, it does not swap in older ones.
+    var newest = newestFirst(channel.videos);
+    var chosen = limit ? newest.slice(0, limit) : newest;
+    return sort === SORT_OLDEST ? chosen.slice().reverse() : chosen;
+  }
+
   function render(container, channels, limit, expandable) {
     container.innerHTML = "";
     channels.forEach(function (channel) {
       container.appendChild(channelBlock(channel, limit, expandable));
     });
     document.dispatchEvent(new CustomEvent("kiddo:rendered"));
+  }
+
+  function rerender() {
+    render(state.container, state.channels, state.limit, state.expandable);
+  }
+
+  function buildSortControl() {
+    var wrap = document.querySelector(".video-search-wrap");
+    if (!wrap || wrap.querySelector(".video-sort")) return;
+
+    var row = wrap.querySelector(".video-search-row") || wrap;
+
+    var btn = el("button", "video-sort");
+    btn.type = "button";
+
+    var icon = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    icon.setAttribute("class", "video-sort-icon");
+    icon.setAttribute("viewBox", "0 0 24 24");
+    icon.setAttribute("width", "16");
+    icon.setAttribute("height", "16");
+    icon.setAttribute("aria-hidden", "true");
+    icon.innerHTML =
+      '<line x1="5" y1="6" x2="15" y2="6"></line>' +
+      '<line x1="5" y1="12" x2="12" y2="12"></line>' +
+      '<line x1="5" y1="18" x2="9" y2="18"></line>' +
+      '<polyline points="17 9 20 6 20 18"></polyline>';
+    btn.appendChild(icon);
+
+    var label = el("span", "video-sort-label");
+    btn.appendChild(label);
+
+    function paint() {
+      var newest = state.sort === SORT_NEWEST;
+      label.textContent = newest ? "Шинэ эхэндээ" : "Хуучин эхэндээ";
+      btn.setAttribute("aria-label", "Огноогоор эрэмбэлэх: " + label.textContent);
+      btn.setAttribute("data-sort", state.sort);
+      btn.classList.toggle("is-oldest", !newest);
+    }
+
+    btn.addEventListener("click", function () {
+      state.sort = state.sort === SORT_NEWEST ? SORT_OLDEST : SORT_NEWEST;
+      paint();
+      rerender();
+    });
+
+    paint();
+    row.appendChild(btn);
   }
 
   function boot() {
@@ -214,15 +325,13 @@
     var limit = limitAttr ? parseInt(limitAttr, 10) : 0;
     var expandable = container.getAttribute("data-expandable") === "true";
 
-    Promise.all(
-      slugs.map(function (slug) {
-        return fetch("data/" + slug + ".json").then(function (res) {
-          if (!res.ok) throw new Error(slug + ": HTTP " + res.status);
-          return res.json();
-        });
-      })
-    )
+    Promise.all(slugs.map(loadChannel))
       .then(function (channels) {
+        state.channels = channels;
+        state.container = container;
+        state.limit = limit;
+        state.expandable = expandable;
+        buildSortControl();
         render(container, channels, limit, expandable);
       })
       .catch(function (err) {

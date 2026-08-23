@@ -46,9 +46,167 @@ test.describe('channel JSON', () => {
         expect(v.summary).toMatch(/[Ѐ-ӿ]/);
         expect(v.summary.length).toBeGreaterThan(80);
         expect(Array.isArray(v.questions)).toBeTruthy();
+
+        // The sort control reads this. It may be null (then ordering falls
+        // back to array position), but the key must exist and, when set, be a
+        // real date — never a free-text string.
+        expect(v, 'published must be present in the schema').toHaveProperty('published');
+        if (v.published !== null) {
+          expect(v.published).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+          expect(Number.isNaN(Date.parse(v.published))).toBe(false);
+        }
       }
     });
   }
+});
+
+test.describe('fresh data', () => {
+  // Regression: the JSON was fetched plainly, so a browser or the GitHub Pages
+  // CDN could serve a cached copy and a freshly uploaded channel file would not
+  // show up on the live site.
+  test('each channel file is requested with a cache-busting url', async ({ page }) => {
+    const urls = [];
+    page.on('request', (r) => {
+      if (/data\/.*\.json/.test(r.url())) urls.push(r.url());
+    });
+
+    await page.goto('/index.html');
+    await page.waitForSelector('.video-card');
+
+    expect(urls.length).toBe(CHANNELS.length);
+    for (const u of urls) {
+      expect(u, 'data request must not be cacheable by url').toMatch(/\?t=\d+/);
+    }
+  });
+
+  test('a second load re-requests rather than reusing the first url', async ({ page }) => {
+    const seen = [];
+    page.on('request', (r) => {
+      if (/data\/nutshell\.json/.test(r.url())) seen.push(r.url());
+    });
+
+    await page.goto('/index.html');
+    await page.waitForSelector('.video-card');
+    await page.goto('/index.html');
+    await page.waitForSelector('.video-card');
+
+    expect(seen.length).toBe(2);
+    expect(seen[0], 'each load must use a distinct url').not.toBe(seen[1]);
+  });
+
+  test('an edited file shows up on the very next load', async ({ page }) => {
+    // Stand in for the owner uploading new channel data.
+    await page.route(/data\/nutshell\.json/, async (route) => {
+      const json = await (await route.fetch()).json();
+      json.videos[0].title = 'ШИНЭЭР НЭМСЭН БИЧЛЭГ';
+      await route.fulfill({ body: JSON.stringify(json), contentType: 'application/json' });
+    });
+
+    await page.goto('/index.html');
+    await page.waitForSelector('.video-card');
+    await expect(
+      page.locator('.video-channel[data-channel="nutshell"] .video-card-title').first()
+    ).toHaveText('ШИНЭЭР НЭМСЭН БИЧЛЭГ');
+  });
+});
+
+test.describe('sort by upload date', () => {
+  const nutshellTitles = (page) =>
+    page.locator('.video-channel[data-channel="nutshell"] .video-card-title').allTextContents();
+
+  test('the control sits beside the search field', async ({ page }) => {
+    await page.goto('/index.html');
+    await page.waitForSelector('.video-card');
+
+    const sort = page.locator('.video-sort');
+    await expect(sort).toBeVisible();
+
+    const s = await sort.boundingBox();
+    const q = await page.locator('.video-search').boundingBox();
+    expect(Math.abs(s.y - q.y), 'same row as the search field').toBeLessThan(8);
+    expect(s.x, 'to the right of the search field').toBeGreaterThan(q.x);
+  });
+
+  test('toggling reverses the order and back again', async ({ page }) => {
+    await page.goto('/index.html');
+    await page.waitForSelector('.video-card');
+
+    const before = await nutshellTitles(page);
+    expect(before.length).toBe(HOME_LIMIT);
+
+    await page.locator('.video-sort').click();
+    await expect.poll(() => nutshellTitles(page)).toEqual([...before].reverse());
+
+    await page.locator('.video-sort').click();
+    await expect.poll(() => nutshellTitles(page)).toEqual(before);
+  });
+
+  test('sorting keeps the homepage to the newest three, it does not swap in older ones', async ({ page }) => {
+    const newest = data('nutshell').videos.slice(0, HOME_LIMIT).map((v) => v.title);
+
+    await page.goto('/index.html');
+    await page.waitForSelector('.video-card');
+    await page.locator('.video-sort').click();
+
+    await expect.poll(() => nutshellTitles(page)).toEqual([...newest].reverse());
+    // Same three videos, just reordered.
+    await expect.poll(async () => (await nutshellTitles(page)).slice().sort()).toEqual(
+      [...newest].sort()
+    );
+  });
+
+  test('search still works after a sort re-render', async ({ page }) => {
+    await page.goto('/index.html');
+    await page.waitForSelector('.video-card');
+
+    await page.locator('.video-sort').click();
+    await page.fill('#videoSearch', 'хар нүх');
+
+    await expect(page.locator('.video-search-status')).toContainText('бичлэг олдлоо');
+    await expect.poll(() => visible(page, '.video-card')).toBeGreaterThan(0);
+  });
+
+  test('real published dates drive the order, not array position', async ({ page }) => {
+    // Every video dated, deliberately out of array order.
+    const dates = ['2020-05-01', '2022-01-01', '2019-01-01', '2023-06-01'];
+    await page.route(/data\/nutshell\.json/, async (route) => {
+      const json = await (await route.fetch()).json();
+      json.videos.forEach((v, i) => { v.published = dates[i]; });
+      await route.fulfill({ body: JSON.stringify(json), contentType: 'application/json' });
+    });
+
+    const source = data('nutshell').videos.map((v) => v.title);
+    const byDateDesc = source
+      .map((t, i) => ({ t, d: Date.parse(dates[i]) }))
+      .sort((a, b) => b.d - a.d)
+      .map((x) => x.t);
+
+    await page.goto('/channel-nutshell.html');
+    await page.waitForSelector('.video-card');
+
+    const shown = await page.locator('.video-card-title').allTextContents();
+    expect(shown).toEqual(byDateDesc);
+    expect(shown, 'dates must win over array order').not.toEqual(source);
+
+    await page.locator('.video-sort').click();
+    await expect.poll(() => page.locator('.video-card-title').allTextContents()).toEqual(
+      [...byDateDesc].reverse()
+    );
+  });
+
+  test('channel pages sort the whole collection', async ({ page }) => {
+    const all = data('nutshell').videos.map((v) => v.title);
+    await page.goto('/channel-nutshell.html');
+    await page.waitForSelector('.video-card');
+
+    expect(await page.locator('.video-card-title').allTextContents()).toEqual(all);
+    await page.locator('.video-sort').click();
+    await expect.poll(() => page.locator('.video-card-title').allTextContents()).toEqual(
+      [...all].reverse()
+    );
+    // The description carousels must survive the re-render.
+    await expect(page.locator('.video-desc')).toHaveCount(all.length);
+  });
 });
 
 test.describe('homepage collection', () => {
