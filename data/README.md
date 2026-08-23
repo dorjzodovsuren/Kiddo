@@ -39,6 +39,31 @@ Each entry in `videos`:
 All reader-facing text (`intro`, `about`, `title`, `summary`, `questions`)
 should be Mongolian.
 
+`published` may be `null`, or left out entirely — see *Ordering*.
+
+## Quotes inside text — the easy way to break a file
+
+A double quote inside a value **must** be written `\"`, because a bare `"`
+ends the string and makes the file invalid JSON:
+
+```jsonc
+"summary": "… тодорхойлогдсон "утга учир"-гүй бол …"     // ✗ breaks the file
+"summary": "… тодорхойлогдсон \"утга учир\"-гүй бол …"   // ✓
+"summary": "… тодорхойлогдсон «утга учир»-гүй бол …"     // ✓ and easier to read
+```
+
+This has bitten this repo once already: one unescaped pair made the whole
+channel unreadable. Guillemets `« »` avoid the problem entirely and are normal
+in Mongolian typography, so prefer them over `"` in body text.
+
+After editing, check the file parses before pushing:
+
+```sh
+python3 -m json.tool data/nutshell.json > /dev/null && echo OK
+```
+
+`npm test` also fails if any file in this folder is not valid JSON.
+
 ## Ordering and the sort control
 
 The sort button next to the search box switches between newest-first and

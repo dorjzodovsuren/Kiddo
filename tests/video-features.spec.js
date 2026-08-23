@@ -22,6 +22,39 @@ test.beforeEach(async ({ page }) => {
 });
 
 test.describe('channel JSON', () => {
+  // Regression guard. An upload once contained an unescaped double quote
+  // inside a Mongolian summary ("утга учир"), which is a JSON syntax error.
+  // The file could not be parsed, so that channel silently disappeared —
+  // and, because the loads were awaited together, it took every other
+  // channel's videos down with it.
+  const files = fs
+    .readdirSync(path.join(__dirname, '..', 'data'))
+    .filter((f) => f.endsWith('.json'));
+
+  test('every data file on disk is valid JSON', () => {
+    expect(files.length).toBeGreaterThan(0);
+    for (const f of files) {
+      const raw = fs.readFileSync(path.join(__dirname, '..', 'data', f), 'utf8');
+      expect(() => JSON.parse(raw), `data/${f} is not parseable JSON`).not.toThrow();
+    }
+  });
+
+  test('a broken channel file does not take the other channels down', async ({ page }) => {
+    await page.route(/data\/nutshell\.json/, (route) =>
+      route.fulfill({ body: '{ "videos": [ broken ', contentType: 'application/json' })
+    );
+
+    await page.goto('/index.html');
+    await page.waitForSelector('.video-card');
+
+    // The other two channels still render.
+    await expect(page.locator('.video-channel[data-channel="brainscoop"]')).toBeVisible();
+    await expect(page.locator('.video-channel[data-channel="schooloflife"]')).toBeVisible();
+    await expect(page.locator('.video-channel[data-channel="nutshell"]')).toHaveCount(0);
+    // And the failure is named rather than silent.
+    await expect(page.locator('.video-load-error')).toContainText('nutshell');
+  });
+
   for (const ch of CHANNELS) {
     test(`data/${ch.slug}.json is well formed`, async ({ request, baseURL }) => {
       const res = await request.get(new URL('data/' + ch.slug + '.json', baseURL).toString());
@@ -47,11 +80,11 @@ test.describe('channel JSON', () => {
         expect(v.summary.length).toBeGreaterThan(80);
         expect(Array.isArray(v.questions)).toBeTruthy();
 
-        // The sort control reads this. It may be null (then ordering falls
-        // back to array position), but the key must exist and, when set, be a
-        // real date — never a free-text string.
-        expect(v, 'published must be present in the schema').toHaveProperty('published');
-        if (v.published !== null) {
+        // The sort control reads this. It may be null or absent (ordering then
+        // falls back to array position), but when set it must be a real date —
+        // never free text. Absence is tolerated so a hand-written upload that
+        // omits it still works.
+        if (v.published !== null && v.published !== undefined) {
           expect(v.published).toMatch(/^\d{4}-\d{2}-\d{2}$/);
           expect(Number.isNaN(Date.parse(v.published))).toBe(false);
         }
@@ -167,15 +200,21 @@ test.describe('sort by upload date', () => {
   });
 
   test('real published dates drive the order, not array position', async ({ page }) => {
-    // Every video dated, deliberately out of array order.
-    const dates = ['2020-05-01', '2022-01-01', '2019-01-01', '2023-06-01'];
+    const source = data('nutshell').videos.map((v) => v.title);
+
+    // Date every video deliberately against array order: entry 0 gets the
+    // OLDEST date and the last entry the newest, so sorting newest-first must
+    // produce the reverse of the file order. Derived from the file so the
+    // fixture keeps covering every video as the channel grows.
+    const dateFor = (i) => `20${String(10 + i).padStart(2, '0')}-01-01`;
+    const dates = source.map((_, i) => dateFor(i));
+
     await page.route(/data\/nutshell\.json/, async (route) => {
       const json = await (await route.fetch()).json();
       json.videos.forEach((v, i) => { v.published = dates[i]; });
       await route.fulfill({ body: JSON.stringify(json), contentType: 'application/json' });
     });
 
-    const source = data('nutshell').videos.map((v) => v.title);
     const byDateDesc = source
       .map((t, i) => ({ t, d: Date.parse(dates[i]) }))
       .sort((a, b) => b.d - a.d)

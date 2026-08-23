@@ -203,10 +203,24 @@
   ------------------------------------------------------------------*/
   function loadChannel(slug) {
     var url = "data/" + slug + ".json?t=" + Date.now();
-    return fetch(url, { cache: "no-store" }).then(function (res) {
-      if (!res.ok) throw new Error(slug + ": HTTP " + res.status);
-      return res.json();
-    });
+    return fetch(url, { cache: "no-store" })
+      .then(function (res) {
+        if (!res.ok) throw new Error("HTTP " + res.status);
+        // .json() on malformed content rejects with a parse error; surface the
+        // channel name with it so a hand-edited file is easy to track down.
+        return res.json();
+      })
+      .then(function (channel) {
+        return { ok: true, slug: slug, channel: channel };
+      })
+      .catch(function (err) {
+        // One unreadable file must not take the whole page down with it — a
+        // stray quote in one channel's JSON used to blank every channel.
+        if (window.console) {
+          window.console.error("[kiddo] data/" + slug + ".json could not be read:", err);
+        }
+        return { ok: false, slug: slug, error: err };
+      });
   }
 
   /* ---------------------------------------------------------------
@@ -261,6 +275,19 @@
     channels.forEach(function (channel) {
       container.appendChild(channelBlock(channel, limit, expandable));
     });
+
+    // Name any channel whose file could not be read, so a broken upload is
+    // visible on the page instead of the channel just quietly vanishing.
+    (state.failed || []).forEach(function (f) {
+      container.appendChild(
+        el(
+          "p",
+          "video-load-error",
+          "«" + f.slug + "» сувгийн мэдээллийг уншиж чадсангүй (data/" + f.slug + ".json)."
+        )
+      );
+    });
+
     document.dispatchEvent(new CustomEvent("kiddo:rendered"));
   }
 
@@ -325,25 +352,31 @@
     var limit = limitAttr ? parseInt(limitAttr, 10) : 0;
     var expandable = container.getAttribute("data-expandable") === "true";
 
-    Promise.all(slugs.map(loadChannel))
-      .then(function (channels) {
-        state.channels = channels;
-        state.container = container;
-        state.limit = limit;
-        state.expandable = expandable;
-        buildSortControl();
-        render(container, channels, limit, expandable);
-      })
-      .catch(function (err) {
+    Promise.all(slugs.map(loadChannel)).then(function (results) {
+      var ok = results.filter(function (r) { return r.ok; });
+      var failed = results.filter(function (r) { return !r.ok; });
+
+      state.channels = ok.map(function (r) { return r.channel; });
+      state.container = container;
+      state.limit = limit;
+      state.expandable = expandable;
+      state.failed = failed;
+
+      if (!ok.length) {
         container.innerHTML = "";
-        var msg = el(
-          "p",
-          "video-load-error",
-          "Бичлэгийн мэдээллийг ачаалж чадсангүй. Хуудсыг сервер дээр нээж үзнэ үү."
+        container.appendChild(
+          el(
+            "p",
+            "video-load-error",
+            "Бичлэгийн мэдээллийг ачаалж чадсангүй. Хуудсыг сервер дээр нээж үзнэ үү."
+          )
         );
-        container.appendChild(msg);
-        if (window.console) window.console.error("[kiddo] video data failed:", err);
-      });
+        return;
+      }
+
+      buildSortControl();
+      render(container, state.channels, limit, expandable);
+    });
   }
 
   if (document.readyState === "loading") {
