@@ -17,7 +17,8 @@
       "questions": [
         "Яагаад үлэмж биетэй, хүчирхэг үлэг гүрвэл устаж үгүй болсон юм бол?",
         "Тэр өдөр дэлхий дээр яг юу болсон бэ?"
-      ]
+      ],
+      "voiceover": "https://raw.githubusercontent.com/dorjzodovsuren/MongolianTTS/main/audio/1_edge_tts.mp3"
     },
     {
       "id": "modaltail",

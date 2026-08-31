@@ -1,123 +1,86 @@
 const { test, expect } = require('@playwright/test');
+const fs = require('fs');
+const path = require('path');
 
 // Third-party players add network variance and nothing these specs assert on.
 test.beforeEach(async ({ page }) => {
   await page.route(/(youtube\.com|youtube-nocookie\.com|ytimg\.com)/, (r) => r.abort());
 });
 
-const STORAGE_KEY = 'kiddo:voiceover:nutshell::modalVideo';
-const TEST_URL = 'https://example.com/audio/dub.mp3';
+const data = (slug) =>
+  JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'data', slug + '.json'), 'utf8'));
 
 test.describe('voice-over toggle', () => {
-  test('every card ships a toggle, a settings gear and a hidden audio element', async ({ page }) => {
+  test('only videos with a voiceover url in the JSON get a toggle', async ({ page }) => {
+    const videos = data('nutshell').videos;
+    const withVoiceover = videos.filter((v) => v.voiceover).length;
+
     await page.goto('/channel-nutshell.html');
     await page.waitForSelector('.video-card');
 
-    const count = await page.locator('.video-card').count();
-    await expect(page.locator('.video-voiceover-toggle')).toHaveCount(count);
-    await expect(page.locator('.video-voiceover-settings')).toHaveCount(count);
-    await expect(page.locator('.video-voiceover-audio')).toHaveCount(count);
+    await expect(page.locator('.video-card')).toHaveCount(videos.length);
+    await expect(page.locator('.video-voiceover')).toHaveCount(withVoiceover);
+    await expect(page.locator('.video-voiceover-toggle')).toHaveCount(withVoiceover);
 
-    const first = page.locator('.video-voiceover').first();
-    await expect(first.locator('.video-voiceover-toggle')).toHaveAttribute('data-mode', 'original');
-    await expect(first.locator('.video-voiceover-toggle')).toHaveAttribute('aria-pressed', 'false');
-    await expect(first.locator('.video-voiceover-panel')).toBeHidden();
+    // No leftover upload/settings surface of any kind.
+    await expect(page.locator('.video-voiceover-settings')).toHaveCount(0);
+    await expect(page.locator('.video-voiceover-panel')).toHaveCount(0);
+    await expect(page.locator('input[type="file"]')).toHaveCount(0);
+    await expect(page.locator('.video-voiceover-url')).toHaveCount(0);
   });
 
-  test('the gear opens and closes the settings panel', async ({ page }) => {
+  test('the hidden audio element points straight at the JSON url', async ({ page }) => {
+    const first = data('nutshell').videos[0];
+    expect(first.voiceover, 'fixture must keep a voiceover url on its first video').toBeTruthy();
+
     await page.goto('/channel-nutshell.html');
     await page.waitForSelector('.video-card');
 
-    const card = page.locator('.video-voiceover').first();
-    const gear = card.locator('.video-voiceover-settings');
-    const panel = card.locator('.video-voiceover-panel');
-
-    await expect(panel).toBeHidden();
-    await gear.click();
-    await expect(panel).toBeVisible();
-    await expect(gear).toHaveAttribute('aria-expanded', 'true');
-
-    await gear.click();
-    await expect(panel).toBeHidden();
-    await expect(gear).toHaveAttribute('aria-expanded', 'false');
+    const audioSrc = await page.locator('.video-voiceover-audio').first().evaluate((a) => a.src);
+    expect(audioSrc).toBe(first.voiceover);
   });
 
-  test('toggling with no audio configured opens the panel instead of switching', async ({ page }) => {
+  test('the toggle starts on original audio and switches on click', async ({ page }) => {
     await page.goto('/channel-nutshell.html');
     await page.waitForSelector('.video-card');
 
-    const card = page.locator('.video-voiceover').first();
-    await card.locator('.video-voiceover-toggle').click();
+    const toggle = page.locator('.video-voiceover-toggle').first();
+    await expect(toggle).toHaveAttribute('data-mode', 'original');
+    await expect(toggle).toHaveAttribute('aria-pressed', 'false');
+    await expect(toggle).toContainText('Эх дуу');
 
-    await expect(card.locator('.video-voiceover-panel')).toBeVisible();
-    await expect(card.locator('.video-voiceover-toggle')).toHaveAttribute('data-mode', 'original');
-    await expect(card.locator('.video-voiceover-status')).toHaveClass(/is-error/);
-  });
-
-  test('saving a link switches the toggle to voice-over mode and persists it', async ({ page }) => {
-    await page.goto('/channel-nutshell.html');
-    await page.waitForSelector('.video-card');
-
-    const card = page.locator('.video-voiceover').first();
-    await card.locator('.video-voiceover-settings').click();
-    await card.locator('.video-voiceover-url').fill(TEST_URL);
-    await card.locator('.video-voiceover-save').click();
-
-    await expect(card.locator('.video-voiceover-status')).not.toHaveClass(/is-error/);
-
-    const stored = await page.evaluate((k) => window.localStorage.getItem(k), STORAGE_KEY);
-    expect(stored).toBe(TEST_URL);
-
-    const toggle = card.locator('.video-voiceover-toggle');
     await toggle.click();
     await expect(toggle).toHaveAttribute('data-mode', 'voiceover');
     await expect(toggle).toHaveAttribute('aria-pressed', 'true');
     await expect(toggle).toContainText('Оруулсан дуу');
 
-    const audioSrc = await card.locator('.video-voiceover-audio').evaluate((a) => a.src);
-    expect(audioSrc).toBe(TEST_URL);
-
-    // Toggling back returns to the original-audio label.
     await toggle.click();
     await expect(toggle).toHaveAttribute('data-mode', 'original');
     await expect(toggle).toContainText('Эх дуу');
   });
 
-  test('a saved link is restored, pre-filled, on the next visit', async ({ page }) => {
-    await page.addInitScript(
-      ([key, value]) => window.localStorage.setItem(key, value),
-      [STORAGE_KEY, TEST_URL]
-    );
+  test('each card keeps its own toggle state independently', async ({ page }) => {
+    const videos = data('nutshell').videos;
+    const secondHasVoiceover = !!videos[1] && !!videos[1].voiceover;
+    test.skip(!secondHasVoiceover, 'fixture needs a second video with a voiceover url for this check');
 
     await page.goto('/channel-nutshell.html');
     await page.waitForSelector('.video-card');
 
-    const card = page.locator('.video-voiceover').first();
-    await expect(card.locator('.video-voiceover-url')).toHaveValue(TEST_URL);
-    await expect(card.locator('.video-voiceover-status')).not.toHaveClass(/is-error/);
-    await expect(card.locator('.video-voiceover-status')).not.toBeEmpty();
+    const toggles = page.locator('.video-voiceover-toggle');
+    await toggles.nth(0).click();
 
-    // No need to open the panel first this time: the toggle can switch right away.
-    const toggle = card.locator('.video-voiceover-toggle');
-    await toggle.click();
-    await expect(toggle).toHaveAttribute('data-mode', 'voiceover');
+    await expect(toggles.nth(0)).toHaveAttribute('data-mode', 'voiceover');
+    await expect(toggles.nth(1)).toHaveAttribute('data-mode', 'original');
   });
 
-  test('each card keeps its own voice-over independently', async ({ page }) => {
-    await page.goto('/channel-nutshell.html');
+  test('the homepage renders no stray voice-over markup for videos without one', async ({ page }) => {
+    await page.goto('/index.html');
     await page.waitForSelector('.video-card');
 
-    const cards = page.locator('.video-voiceover');
-    const first = cards.nth(0);
-    const second = cards.nth(1);
-
-    await first.locator('.video-voiceover-settings').click();
-    await first.locator('.video-voiceover-url').fill(TEST_URL);
-    await first.locator('.video-voiceover-save').click();
-    await first.locator('.video-voiceover-toggle').click();
-
-    await expect(first.locator('.video-voiceover-toggle')).toHaveAttribute('data-mode', 'voiceover');
-    await expect(second.locator('.video-voiceover-toggle')).toHaveAttribute('data-mode', 'original');
-    await expect(second.locator('.video-voiceover-panel')).toBeHidden();
+    const total = await page.locator('.video-card').count();
+    const withToggle = await page.locator('.video-voiceover-toggle').count();
+    expect(withToggle).toBeLessThanOrEqual(total);
+    await expect(page.locator('.video-voiceover-settings, .video-voiceover-panel, input[type="file"]')).toHaveCount(0);
   });
 });

@@ -17,7 +17,8 @@
       "questions": [
         "Жинхэнэ ойлголцол гэж юу вэ?",
         "Харилцаанд яагаад зөрчил гардаг вэ?"
-      ]
+      ],
+      "voiceover": "https://raw.githubusercontent.com/dorjzodovsuren/MongolianTTS/main/audio/1_edge_tts.mp3"
     },
     {
       "id": "theschooloflife2",

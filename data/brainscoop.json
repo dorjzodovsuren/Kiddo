@@ -17,7 +17,8 @@
       "questions": [
         "Музейн агуулахад юу нуугдаж байдаг вэ?",
         "Олдворуудыг хэрхэн хадгалдаг вэ?"
-      ]
+      ],
+      "voiceover": "https://raw.githubusercontent.com/dorjzodovsuren/MongolianTTS/main/audio/1_edge_tts.mp3"
     },
     {
       "id": "thebrainscoop2",
