@@ -278,8 +278,12 @@ test.describe('homepage collection', () => {
       const titles = await block.locator('.video-card-title').allTextContents();
       expect(titles).toEqual(expected.map((v) => v.title));
 
+      // The embed src is the JSON url plus enablejsapi/origin params, which
+      // js/video-voiceover.js needs to mute/unmute the player for voice-over
+      // playback — so compare the base url rather than an exact match.
       const srcs = await block.locator('iframe').evaluateAll((els) => els.map((e) => e.getAttribute('src')));
-      expect(srcs).toEqual(expected.map((v) => v.url));
+      expect(srcs.map((s) => s.split('?')[0])).toEqual(expected.map((v) => v.url.split('?')[0]));
+      for (const s of srcs) expect(s).toContain('enablejsapi=1');
     }
   });
 

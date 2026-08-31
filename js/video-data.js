@@ -23,14 +23,95 @@
     return node;
   }
 
+  // enablejsapi + origin let js/video-voiceover.js drive the player through
+  // the official YouTube IFrame Player API (mute/unmute, play state) so it
+  // can keep a separate voice-over audio track in sync with it.
+  function withPlayerApi(url) {
+    var sep = url.indexOf("?") === -1 ? "?" : "&";
+    return url + sep + "enablejsapi=1&origin=" + encodeURIComponent(window.location.origin);
+  }
+
+  function voiceoverBlock(video, channel, iframeId) {
+    var wrap = el("div", "video-voiceover");
+    wrap.setAttribute("data-voiceover-key", channel.slug + "::" + video.id);
+    wrap.setAttribute("data-player-id", iframeId);
+    if (video.voiceover) wrap.setAttribute("data-voiceover-default", video.voiceover);
+
+    var controls = el("div", "video-voiceover-controls");
+
+    var toggle = el("button", "video-voiceover-toggle");
+    toggle.type = "button";
+    toggle.setAttribute("data-mode", "original");
+    toggle.setAttribute("aria-pressed", "false");
+    toggle.appendChild(el("span", "video-voiceover-toggle-label", "Эх дуу"));
+    controls.appendChild(toggle);
+
+    var settingsBtn = el("button", "video-voiceover-settings");
+    settingsBtn.type = "button";
+    settingsBtn.setAttribute("aria-label", "Дуу оруулах тохиргоо");
+    settingsBtn.setAttribute("aria-expanded", "false");
+    settingsBtn.innerHTML =
+      '<svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true">' +
+      '<path fill="currentColor" d="M12 8a4 4 0 100 8 4 4 0 000-8zm8.94 3a7.94 7.94 0 00-.14-1.5l2.02-1.58-2-3.46-2.38.96a8.03 8.03 0 00-2.6-1.5L15.5 1h-4l-.34 2.92a8.03 8.03 0 00-2.6 1.5l-2.38-.96-2 3.46L6.2 9.5A7.94 7.94 0 006.06 11c0 .51.05 1.01.14 1.5l-2.02 1.58 2 3.46 2.38-.96c.75.64 1.63 1.15 2.6 1.5L11.5 21h4l.34-2.92c.97-.35 1.85-.86 2.6-1.5l2.38.96 2-3.46-2.02-1.58c.09-.49.14-.99.14-1.5z"/>' +
+      "</svg>";
+    controls.appendChild(settingsBtn);
+
+    wrap.appendChild(controls);
+
+    var panel = el("div", "video-voiceover-panel");
+    panel.hidden = true;
+
+    var urlId = "voiceover-url-" + iframeId;
+    var label = el("label", "video-voiceover-label", "Дуу оруулах холбоос (URL)");
+    label.setAttribute("for", urlId);
+    panel.appendChild(label);
+
+    var inputRow = el("div", "video-voiceover-input-row");
+    var urlInput = document.createElement("input");
+    urlInput.type = "url";
+    urlInput.id = urlId;
+    urlInput.className = "video-voiceover-url";
+    urlInput.placeholder = "https://... (жиш: dubbing.mp3)";
+    inputRow.appendChild(urlInput);
+
+    var saveBtn = el("button", "video-voiceover-save", "Хадгалах");
+    saveBtn.type = "button";
+    inputRow.appendChild(saveBtn);
+    panel.appendChild(inputRow);
+
+    var fileRow = el("div", "video-voiceover-file-row");
+    fileRow.appendChild(el("span", null, "эсвэл компьютерээс сонгох:"));
+    var fileInput = document.createElement("input");
+    fileInput.type = "file";
+    fileInput.accept = "audio/*";
+    fileInput.className = "video-voiceover-file";
+    fileRow.appendChild(fileInput);
+    panel.appendChild(fileRow);
+
+    panel.appendChild(el("p", "video-voiceover-status", ""));
+
+    wrap.appendChild(panel);
+
+    var audio = document.createElement("audio");
+    audio.className = "video-voiceover-audio";
+    audio.preload = "none";
+    wrap.appendChild(audio);
+
+    return wrap;
+  }
+
   function videoCard(video, channel, expandable) {
     var card = el("article", "video-card");
     card.setAttribute("data-video-title", video.title);
     card.setAttribute("data-video-channel", channel.name);
+    card.setAttribute("data-video-id", video.id);
+
+    var iframeId = "ytp-" + channel.slug + "-" + video.id;
 
     var frame = el("div", "video-card-frame");
     var iframe = document.createElement("iframe");
-    iframe.src = video.url;
+    iframe.id = iframeId;
+    iframe.src = withPlayerApi(video.url);
     iframe.title = video.title;
     iframe.loading = "lazy";
     iframe.setAttribute("frameborder", "0");
@@ -39,6 +120,7 @@
       "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
     );
     iframe.setAttribute("allowfullscreen", "");
+    iframe.setAttribute("data-yt-player", "true");
     frame.appendChild(iframe);
     card.appendChild(frame);
 
@@ -50,6 +132,8 @@
     } else {
       body.appendChild(el("p", "video-card-summary", video.summary));
     }
+
+    body.appendChild(voiceoverBlock(video, channel, iframeId));
 
     card.appendChild(body);
     return card;
