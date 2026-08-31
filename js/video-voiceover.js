@@ -1,15 +1,13 @@
 /*
   KidDo — voice-over playback.
 
-  Each video card (built by js/video-data.js) carries a toggle button, a
-  settings panel for entering a voice-over audio URL or file, and a hidden
-  <audio> element. This file wires all three together:
+  Each video card that has a "voiceover" url in its channel's JSON (built by
+  js/video-data.js) carries one toggle button and a hidden <audio> element
+  already pointed at that url — there is no upload path and nothing is saved
+  per-visitor, so this file only has to wire the toggle up:
 
-    - "Эх дуу" / "Оруулсан дуу" toggle mutes the YouTube player and plays the
-      voice-over audio in sync, or the reverse.
-    - The settings panel saves the entered URL to localStorage, keyed per
-      video, so it survives a reload. A locally chosen file plays for the
-      current visit only (there is nowhere to upload it to).
+    - "Эх дуу" / "Оруулсан дуу" mutes the YouTube player and plays the
+      voice-over audio in sync with it, or the reverse.
     - While the voice-over is playing, a short interval nudges the audio back
       in step with the video's current time to correct drift from network
       jitter — YouTube's API does not emit a "seeked" event to react to
@@ -21,47 +19,10 @@
 (function (window, document) {
   "use strict";
 
-  var STORAGE_PREFIX = "kiddo:voiceover:";
   var DRIFT_TOLERANCE = 0.4;
   var entries = [];
   var apiLoading = false;
   var apiWaiters = [];
-
-  function storageKey(key) {
-    return STORAGE_PREFIX + key;
-  }
-
-  function readStored(key) {
-    try {
-      return window.localStorage.getItem(storageKey(key));
-    } catch (e) {
-      return null;
-    }
-  }
-
-  function writeStored(key, value) {
-    try {
-      window.localStorage.setItem(storageKey(key), value);
-    } catch (e) {
-      // Storage may be unavailable (private mode, quota). The audio still
-      // plays for the current session even if it cannot be remembered.
-    }
-  }
-
-  function setStatus(entry, text, isError) {
-    entry.status.textContent = text;
-    entry.status.classList.toggle("is-error", !!isError);
-  }
-
-  function openPanel(entry) {
-    entry.panel.hidden = false;
-    entry.settingsBtn.setAttribute("aria-expanded", "true");
-  }
-
-  function closePanel(entry) {
-    entry.panel.hidden = true;
-    entry.settingsBtn.setAttribute("aria-expanded", "false");
-  }
 
   function getPlayerTime(entry) {
     return entry.player && typeof entry.player.getCurrentTime === "function"
@@ -78,7 +39,6 @@
   }
 
   function syncAndPlayAudio(entry) {
-    if (!entry.audio.src) return;
     entry.audio.currentTime = getPlayerTime(entry);
     entry.audio.play().catch(function () {
       // Autoplay can be refused outside a user gesture; the toggle click that
@@ -116,13 +76,6 @@
       unmuteVideo(entry);
       entry.audio.pause();
     }
-  }
-
-  function setVoiceoverSource(entry, src, persist) {
-    entry.audio.src = src;
-    entry.urlInput.value = src;
-    if (persist) writeStored(entry.key, src);
-    if (entry.mode === "voiceover") syncAndPlayAudio(entry);
   }
 
   function onPlayerStateChange(entry, event) {
@@ -180,65 +133,17 @@
   function buildEntry(wrap) {
     var entry = {
       wrap: wrap,
-      key: wrap.getAttribute("data-voiceover-key"),
       iframeId: wrap.getAttribute("data-player-id"),
       mode: "original",
       player: null,
       syncTimer: null,
       toggle: wrap.querySelector(".video-voiceover-toggle"),
-      settingsBtn: wrap.querySelector(".video-voiceover-settings"),
-      panel: wrap.querySelector(".video-voiceover-panel"),
-      urlInput: wrap.querySelector(".video-voiceover-url"),
-      saveBtn: wrap.querySelector(".video-voiceover-save"),
-      fileInput: wrap.querySelector(".video-voiceover-file"),
-      status: wrap.querySelector(".video-voiceover-status"),
       audio: wrap.querySelector(".video-voiceover-audio"),
     };
     entry.toggleLabel = entry.toggle.querySelector(".video-voiceover-toggle-label");
 
-    var initial = readStored(entry.key) || wrap.getAttribute("data-voiceover-default") || "";
-    if (initial) {
-      entry.audio.src = initial;
-      entry.urlInput.value = initial;
-      setStatus(entry, "Дуу тохируулагдсан.", false);
-    }
-
     entry.toggle.addEventListener("click", function () {
-      if (entry.mode === "original") {
-        if (!entry.audio.src) {
-          openPanel(entry);
-          entry.urlInput.focus();
-          setStatus(entry, "Эхлээд дуу оруулах холбоос эсвэл файл нэмнэ үү.", true);
-          return;
-        }
-        applyMode(entry, "voiceover");
-      } else {
-        applyMode(entry, "original");
-      }
-    });
-
-    entry.settingsBtn.addEventListener("click", function () {
-      if (entry.panel.hidden) openPanel(entry);
-      else closePanel(entry);
-    });
-
-    entry.saveBtn.addEventListener("click", function () {
-      var value = entry.urlInput.value.trim();
-      if (!value) {
-        setStatus(entry, "Холбоос хоосон байна.", true);
-        return;
-      }
-      setVoiceoverSource(entry, value, true);
-      setStatus(entry, "Дуу хадгалагдлаа.", false);
-    });
-
-    entry.fileInput.addEventListener("change", function () {
-      var file = entry.fileInput.files && entry.fileInput.files[0];
-      if (!file) return;
-      entry.urlInput.value = "";
-      entry.audio.src = URL.createObjectURL(file);
-      if (entry.mode === "voiceover") syncAndPlayAudio(entry);
-      setStatus(entry, "«" + file.name + "» сонгогдлоо (зөвхөн энэ удаагийн үзэлтэд).", false);
+      applyMode(entry, entry.mode === "original" ? "voiceover" : "original");
     });
 
     ensureYouTubeApi(function () { createPlayer(entry); });

@@ -33,7 +33,7 @@ Each entry in `videos`:
   "heading": "Үлгэрийн цаг",
   "summary": "…",                                          // shown on the card
   "questions": ["…", "…"],                                 // prompts under the summary
-  "voiceover": "https://example.com/audio/dub.mp3"         // optional, see Voice-over below
+  "voiceover": "https://example.com/audio/dub.mp3"         // optional direct audio url, see Voice-over below
 }
 ```
 
@@ -85,19 +85,18 @@ three for display; it does not swap in older ones.
 
 ## Voice-over
 
-Every video card has an "Эх дуу" / "Оруулсан дуу" toggle that mutes the
-YouTube player and plays a separate voice-over audio file in sync with it,
-and back again.
+A video with a `voiceover` url gets a single "Эх дуу" / "Оруулсан дуу" toggle
+on its card that mutes the YouTube player and plays that audio file in sync
+with it, and back again. A video with no `voiceover` url has no toggle — there
+is nothing to switch to.
 
-- `voiceover` in this file sets the default audio for that video (a direct
-  link to an `.mp3`/`.wav` file). It's optional and may be omitted.
-- A visitor can also open the toggle's settings (gear icon) on any card and
-  paste their own audio URL, or pick a local file. A pasted URL is saved in
-  the browser's `localStorage`, so it comes back on their next visit; a local
-  file only plays for that visit, since there is nowhere for the site to
-  upload it to.
-- A visitor's saved link always takes priority over this file's `voiceover`
-  default, for that video, in that browser.
+This JSON file is the **only** source for that audio: there is no upload
+button and nothing is entered or remembered per-visitor. To add or change a
+video's voice-over, edit its `voiceover` url here, the same way you'd edit its
+`title` or `summary`. It must be a direct link to a playable audio file (e.g.
+`.mp3`), not a page that merely links to one — a GitHub "blob" page like
+`github.com/.../blob/main/audio/x.mp3` won't play; use the corresponding
+`raw.githubusercontent.com/.../main/audio/x.mp3` link instead.
 
 ## Caching
 
