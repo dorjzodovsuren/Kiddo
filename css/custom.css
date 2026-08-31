@@ -286,6 +286,141 @@
 
 .video-card-questions li { margin-bottom: 4px; }
 
+/* ---------------------------------------------------------------
+   Voice-over toggle + settings panel (js/video-voiceover.js)
+------------------------------------------------------------------*/
+.video-voiceover { margin-top: 14px; }
+
+.video-voiceover-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.video-voiceover-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  border-radius: 999px;
+  border: 1px solid rgba(34, 67, 214, 0.35);
+  background: rgba(34, 67, 214, 0.08);
+  color: #2243d6;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background .2s ease, color .2s ease, border-color .2s ease;
+}
+
+.video-voiceover-toggle::before {
+  content: "\1F50A";
+  font-size: 13px;
+  line-height: 1;
+}
+
+.video-voiceover-toggle[data-mode="voiceover"] {
+  background: #2243d6;
+  color: #fff;
+  border-color: #2243d6;
+}
+
+.video-voiceover-toggle[data-mode="voiceover"]::before { content: "\1F3A4"; }
+
+.video-voiceover-toggle:hover { border-color: #2243d6; }
+
+.video-voiceover-settings {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  border: 1px solid rgba(29, 36, 64, 0.18);
+  background: rgba(255, 255, 255, 0.6);
+  color: rgba(29, 36, 64, 0.7);
+  cursor: pointer;
+}
+
+.video-voiceover-settings:hover { color: #2243d6; border-color: #2243d6; }
+
+.video-voiceover-settings[aria-expanded="true"] {
+  color: #2243d6;
+  border-color: #2243d6;
+  background: rgba(34, 67, 214, 0.08);
+}
+
+.video-voiceover-panel {
+  margin-top: 12px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: rgba(29, 36, 64, 0.04);
+  border: 1px solid rgba(29, 36, 64, 0.08);
+}
+
+.video-voiceover-panel[hidden] { display: none; }
+
+.video-voiceover-label {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: rgba(29, 36, 64, 0.75);
+}
+
+.video-voiceover-input-row { display: flex; gap: 8px; }
+
+.video-voiceover-url {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 7px 10px;
+  border-radius: 8px;
+  border: 1px solid rgba(29, 36, 64, 0.18);
+  background: #fff;
+  font-size: 12.5px;
+  color: #1d2440;
+}
+
+.video-voiceover-url:focus { outline: none; border-color: #2243d6; }
+
+.video-voiceover-save {
+  flex-shrink: 0;
+  padding: 7px 14px;
+  border-radius: 8px;
+  border: none;
+  background: #2243d6;
+  color: #fff;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.video-voiceover-save:hover { background: #1a35ab; }
+
+.video-voiceover-file-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+  font-size: 12px;
+  color: rgba(29, 36, 64, 0.6);
+}
+
+.video-voiceover-file { max-width: 100%; font-size: 12px; }
+
+.video-voiceover-status {
+  margin: 10px 0 0;
+  font-size: 12px;
+  color: rgba(29, 36, 64, 0.6);
+}
+
+.video-voiceover-status:empty { display: none; }
+.video-voiceover-status.is-error { color: #c0392b; }
+
+@media (max-width: 480px) {
+  .video-voiceover-input-row { flex-direction: column; }
+}
+
 .channel-back { text-align: center; margin-top: 45px; }
 
 @media (max-width: 767px) {

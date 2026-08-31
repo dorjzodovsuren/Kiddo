@@ -32,7 +32,8 @@ Each entry in `videos`:
   "title": "ҮЛЭМЖ ЗАЛУУС",
   "heading": "Үлгэрийн цаг",
   "summary": "…",                                          // shown on the card
-  "questions": ["…", "…"]                                  // prompts under the summary
+  "questions": ["…", "…"],                                 // prompts under the summary
+  "voiceover": "https://example.com/audio/dub.mp3"         // optional, see Voice-over below
 }
 ```
 
@@ -81,6 +82,22 @@ upload dates were never recorded in this repo — fill them in as
 
 The homepage shows the newest 3 videos per channel. Sorting reorders those
 three for display; it does not swap in older ones.
+
+## Voice-over
+
+Every video card has an "Эх дуу" / "Оруулсан дуу" toggle that mutes the
+YouTube player and plays a separate voice-over audio file in sync with it,
+and back again.
+
+- `voiceover` in this file sets the default audio for that video (a direct
+  link to an `.mp3`/`.wav` file). It's optional and may be omitted.
+- A visitor can also open the toggle's settings (gear icon) on any card and
+  paste their own audio URL, or pick a local file. A pasted URL is saved in
+  the browser's `localStorage`, so it comes back on their next visit; a local
+  file only plays for that visit, since there is nowhere for the site to
+  upload it to.
+- A visitor's saved link always takes priority over this file's `voiceover`
+  default, for that video, in that browser.
 
 ## Caching
 
