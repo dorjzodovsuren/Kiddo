@@ -31,7 +31,8 @@
       "questions": [
         "Яснаас ямар мэдээлэл олж авах вэ?",
         "Судлаачид үүнийг яаж тогтоодог вэ?"
-      ]
+      ],
+      "voiceover": "https://raw.githubusercontent.com/dorjzodovsuren/MongolianTTS/main/audio/1_edge_tts.mp3"
     },
     {
       "id": "thebrainscoop3",
@@ -44,7 +45,8 @@
       "questions": [
         "Амьтдыг яагаад ангилах хэрэгтэй вэ?",
         "Шинэ зүйл нээгдвэл яах вэ?"
-      ]
+      ],
+      "voiceover": "https://raw.githubusercontent.com/dorjzodovsuren/MongolianTTS/main/audio/1_edge_tts.mp3"
     },
     {
       "id": "thebrainscoop4",
