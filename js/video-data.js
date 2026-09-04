@@ -47,6 +47,12 @@
     toggle.appendChild(el("span", "video-voiceover-toggle-label", "Эх дуу"));
     wrap.appendChild(toggle);
 
+    // Deliberately "none" at render time: a media element that is loading
+    // holds back the page's load event, and a grid of them would make every
+    // page slower for the sake of dubs most visitors never switch on.
+    // js/video-voiceover.js promotes this to "auto" the moment a visitor
+    // engages with the card — its video starts playing, or a finger goes down
+    // on the toggle — so the audio is buffered before it is asked for.
     var audio = document.createElement("audio");
     audio.className = "video-voiceover-audio";
     audio.preload = "none";

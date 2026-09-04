@@ -90,6 +90,45 @@ on its card that mutes the YouTube player and plays that audio file in sync
 with it, and back again. A video with no `voiceover` url has no toggle — there
 is nothing to switch to.
 
+### Keeping it in sync, and what makes it lag
+
+The audio is a separate file from the video, so the two have to be held
+together by hand — and on a phone that is where lag and dead air come from.
+`js/video-voiceover.js` handles it like this:
+
+- The dub starts downloading when the visitor shows interest in the card (the
+  video starts playing, or a finger goes down on the toggle), not when the
+  toggle is released. Without that head start the tap is followed by a
+  download. Nothing is fetched before that, so a page full of cards still
+  loads at its usual speed.
+- While the dub is still buffering the **video is paused**, and the toggle
+  shows it is waiting. That is what stops the video from running on ahead and
+  the dub from arriving minutes behind.
+- Small drift is corrected by playing the dub a few percent faster or slower —
+  inaudible, and free. Only a real gap (scrubbing, a long stall) is corrected
+  by seeking, and no more than once a second or so, because on a phone a seek
+  costs a fresh network request and is slower than the drift it fixes.
+
+So a dub that still lags is almost always the *file*, not the page:
+
+- **Host it where ranged requests are fast.** The url must answer a
+  `Range` request (`206 Partial Content`); a host that cannot, cannot be
+  seeked at all, and the dub will only ever play from where it started.
+- **Keep the file small.** A long dub at 320 kbps is minutes of download on
+  mobile data. 64–96 kbps mono is plenty for speech and cuts the wait several
+  times over.
+- **Match the video's timeline.** The dub is lined up to the video's clock, so
+  it must start at the video's 0:00 — a file with a lead-in of its own, or cut
+  from a different edit of the video, reads as "out of sync" no matter what
+  the page does.
+
+You can check a url with:
+
+```sh
+curl -sS -o /dev/null -w '%{http_code} %{size_download}\n' \
+  -r 0-1000 'https://…/dub.mp3'     # 206 and 1001 bytes = ranged, good
+```
+
 This JSON file is the **only** source for that audio: there is no upload
 button and nothing is entered or remembered per-visitor. To add or change a
 video's voice-over, edit its `voiceover` url here, the same way you'd edit its

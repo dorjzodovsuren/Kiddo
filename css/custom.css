@@ -326,6 +326,27 @@
 
 .video-voiceover-toggle:hover { border-color: #2243d6; }
 
+/* While the dub is still buffering the card holds the video and shows the
+   wait on the toggle, so a pause the page caused reads as "loading", not as
+   a video that stopped for no reason. */
+.video-voiceover[data-busy="true"] .video-voiceover-toggle {
+  opacity: .75;
+  cursor: progress;
+}
+
+.video-voiceover[data-busy="true"] .video-voiceover-toggle::before {
+  animation: video-voiceover-pulse 1s ease-in-out infinite;
+}
+
+@keyframes video-voiceover-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: .3; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .video-voiceover[data-busy="true"] .video-voiceover-toggle::before { animation: none; }
+}
+
 .channel-back { text-align: center; margin-top: 45px; }
 
 @media (max-width: 767px) {
