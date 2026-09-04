@@ -22,8 +22,8 @@
     },
     {
       "id": "thebrainscoop2",
-      "youtube": "6vOzt-YQjIA",
-      "url": "https://www.youtube.com/embed/6vOzt-YQjIA",
+      "youtube": "TTyyY3VWh8",
+      "url": "https://www.youtube.com/embed/TTyyY3VWh8",
       "published": null,
       "title": "АМЬТНЫ ЯС ЮУ ӨГҮҮЛДЭГ ВЭ",
       "heading": "Үлгэрийн цаг",
@@ -32,7 +32,7 @@
         "Яснаас ямар мэдээлэл олж авах вэ?",
         "Судлаачид үүнийг яаж тогтоодог вэ?"
       ],
-      "voiceover": "https://raw.githubusercontent.com/dorjzodovsuren/MongolianTTS/main/audio/1_edge_tts.mp3"
+      "voiceover": "https://github.com/dorjzodovsuren/MongolianTTS/blob/main/audio/First%20impressions%20of%20GPT-6%20Astra%20from%20developers_Mongolian.mp3"
     },
     {
       "id": "thebrainscoop3",
