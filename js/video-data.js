@@ -26,9 +26,17 @@
   // enablejsapi + origin let js/video-voiceover.js drive the player through
   // the official YouTube IFrame Player API (mute/unmute, play state) so it
   // can keep a separate voice-over audio track in sync with it.
+  //
+  // playsinline is what keeps the voice-over working on a phone. Without it
+  // iOS hands a playing video to the system fullscreen player, which takes
+  // the audio session with it — the page's <audio> element is suspended and
+  // the dub goes silent mid-sentence with no event to react to.
   function withPlayerApi(url) {
     var sep = url.indexOf("?") === -1 ? "?" : "&";
-    return url + sep + "enablejsapi=1&origin=" + encodeURIComponent(window.location.origin);
+    return (
+      url + sep + "enablejsapi=1&playsinline=1&origin=" +
+      encodeURIComponent(window.location.origin)
+    );
   }
 
   // The voice-over track comes only from the channel's own JSON — there is
@@ -47,8 +55,18 @@
     toggle.appendChild(el("span", "video-voiceover-toggle-label", "Эх дуу"));
     wrap.appendChild(toggle);
 
+    // Sync trouble on a slow connection has to be visible, otherwise a card
+    // that is buffering or that gave up on its audio looks identical to one
+    // that is simply playing. js/video-voiceover.js writes the text.
+    var status = el("span", "video-voiceover-status");
+    status.setAttribute("role", "status");
+    wrap.appendChild(status);
+
     var audio = document.createElement("audio");
     audio.className = "video-voiceover-audio";
+    // Twelve cards must not mean twelve audio downloads on a phone data plan:
+    // js/video-voiceover.js starts the fetch for a card the moment that card
+    // looks like it will be used.
     audio.preload = "none";
     audio.src = video.voiceover;
     wrap.appendChild(audio);

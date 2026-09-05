@@ -326,12 +326,47 @@
 
 .video-voiceover-toggle:hover { border-color: #2243d6; }
 
+/* While the dub is waiting on bytes the card says so, instead of looking
+   identical to one that is simply playing. js/video-voiceover.js sets
+   data-state and fills .video-voiceover-status. */
+.video-voiceover-toggle[data-state="buffering"] {
+  opacity: .7;
+  animation: video-voiceover-pulse 1.1s ease-in-out infinite;
+}
+
+.video-voiceover-toggle[data-state="unavailable"] {
+  border-color: rgba(29, 36, 64, 0.2);
+  background: rgba(29, 36, 64, 0.05);
+  color: rgba(29, 36, 64, 0.55);
+}
+
+@keyframes video-voiceover-pulse {
+  50% { opacity: .45; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .video-voiceover-toggle[data-state="buffering"] { animation: none; }
+}
+
+.video-voiceover-status {
+  display: block;
+  margin-top: 6px;
+  font-size: 12px;
+  line-height: 1.4;
+  color: rgba(29, 36, 64, 0.6);
+}
+
+.video-voiceover-status:empty { display: none; }
+
 .channel-back { text-align: center; margin-top: 45px; }
 
 @media (max-width: 767px) {
   .channel-hero { padding: 40px 0 30px; }
   .channel-hero-title { font-size: 28px; }
   .video-grid { grid-template-columns: 1fr; }
+  /* A mis-tap here restarts playback and re-fetches the audio, so give the
+     toggle a full-thumb target on a phone. */
+  .video-voiceover-toggle { padding: 11px 18px; font-size: 13.5px; }
 }
 
 /* ---------------------------------------------------------------
