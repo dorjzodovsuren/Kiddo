@@ -31,11 +31,16 @@
   // iOS hands a playing video to the system fullscreen player, which takes
   // the audio session with it — the page's <audio> element is suspended and
   // the dub goes silent mid-sentence with no event to react to.
-  function withPlayerApi(url) {
+  //
+  // fs=0 is for cards with a voice-over: the player's own fullscreen is a
+  // separate player the page cannot mute, so the original sound came back
+  // on top of the dub. Those cards get the page's own fullscreen button
+  // instead (js/video-voiceover.js), which keeps the same muted player.
+  function withPlayerApi(url, ownFullscreen) {
     var sep = url.indexOf("?") === -1 ? "?" : "&";
     return (
-      url + sep + "enablejsapi=1&playsinline=1&origin=" +
-      encodeURIComponent(window.location.origin)
+      url + sep + "enablejsapi=1&playsinline=1" + (ownFullscreen ? "&fs=0" : "") +
+      "&origin=" + encodeURIComponent(window.location.origin)
     );
   }
 
@@ -54,6 +59,12 @@
     toggle.setAttribute("aria-pressed", "false");
     toggle.appendChild(el("span", "video-voiceover-toggle-label", "Эх дуу"));
     wrap.appendChild(toggle);
+
+    var fullscreen = el("button", "video-voiceover-fullscreen");
+    fullscreen.type = "button";
+    fullscreen.setAttribute("aria-pressed", "false");
+    fullscreen.appendChild(el("span", "video-voiceover-fullscreen-label", "Бүтэн дэлгэц"));
+    wrap.appendChild(fullscreen);
 
     // Sync trouble on a slow connection has to be visible, otherwise a card
     // that is buffering or that gave up on its audio looks identical to one
@@ -84,7 +95,7 @@
     var frame = el("div", "video-card-frame");
     var iframe = document.createElement("iframe");
     iframe.id = iframeId;
-    iframe.src = withPlayerApi(video.url);
+    iframe.src = withPlayerApi(video.url, !!video.voiceover);
     iframe.title = video.title;
     iframe.loading = "lazy";
     iframe.setAttribute("frameborder", "0");

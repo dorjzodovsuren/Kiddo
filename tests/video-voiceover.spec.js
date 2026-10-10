@@ -361,6 +361,70 @@ test.describe('voice-over sync on a slow connection', () => {
     await expect.poll(() => audio.evaluate((a) => a.currentTime)).toBeGreaterThanOrEqual(5);
   });
 
+  // The player's own fullscreen is a separate player on a phone that the
+  // page cannot mute, so the original sound came back over the dub.
+  test('a card with a dub hides the player fullscreen and offers its own', async ({ page }) => {
+    const videos = data('nutshell').videos;
+    await page.goto('/channel-nutshell.html');
+    await page.waitForSelector('.video-card');
+
+    const srcs = await page.locator('.video-card-frame iframe').evaluateAll((frames) =>
+      frames.map((f) => f.getAttribute('src'))
+    );
+    videos.forEach((v, i) => {
+      if (v.voiceover) expect(srcs[i]).toContain('fs=0');
+      else expect(srcs[i]).not.toContain('fs=0');
+    });
+    await expect(page.locator('.video-voiceover-fullscreen'))
+      .toHaveCount(videos.filter((v) => v.voiceover).length);
+  });
+
+  test('fullscreen takes the whole card, keeping the toggle and the mute', async ({ page }) => {
+    await stubEnvironment(page);
+    await page.goto('/channel-nutshell.html');
+    await page.waitForSelector('.video-card');
+
+    const card = page.locator('.video-card', { has: page.locator('.video-voiceover') }).first();
+    const toggle = card.locator('.video-voiceover-toggle');
+    await toggle.click();
+    await page.evaluate(() => window.__players[0].fire(window.YT.PlayerState.PLAYING));
+
+    await card.locator('.video-voiceover-fullscreen').click();
+    await expect.poll(() => card.evaluate((c) => document.fullscreenElement === c)).toBe(true);
+    await expect(card).toHaveClass(/is-fullscreen/);
+    await expect(toggle).toBeVisible();
+    await expect(toggle).toHaveAttribute('data-mode', 'voiceover');
+    expect(await page.evaluate(() => window.__players[0].muted)).toBe(true);
+
+    await card.locator('.video-voiceover-fullscreen').click();
+    await expect.poll(() => page.evaluate(() => document.fullscreenElement)).toBe(null);
+    await expect(card).not.toHaveClass(/is-fullscreen/);
+  });
+
+  test('without element fullscreen the card is pinned over the viewport', async ({ page }) => {
+    await stubEnvironment(page);
+    // iPhone: no element fullscreen API at all.
+    await page.addInitScript(() => {
+      delete Element.prototype.requestFullscreen;
+      delete Element.prototype.webkitRequestFullscreen;
+    });
+    await page.setViewportSize({ width: 390, height: 700 });
+    await page.goto('/channel-nutshell.html');
+    await page.waitForSelector('.video-card');
+
+    const card = page.locator('.video-card', { has: page.locator('.video-voiceover') }).first();
+    await card.locator('.video-voiceover-fullscreen').scrollIntoViewIfNeeded();
+    await card.locator('.video-voiceover-fullscreen').click();
+
+    await expect(card).toHaveClass(/is-fullscreen/);
+    const box = await card.boundingBox();
+    expect(box).toEqual({ x: 0, y: 0, width: 390, height: 700 });
+    await expect(card.locator('.video-voiceover-toggle')).toBeVisible();
+
+    await page.keyboard.press('Escape');
+    await expect(card).not.toHaveClass(/is-fullscreen/);
+  });
+
   test('no player is built for a card sitting below the fold', async ({ page }) => {
     await stubEnvironment(page);
     const viewport = { width: 390, height: 600 }; // a phone

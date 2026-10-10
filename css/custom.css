@@ -348,6 +348,81 @@
   .video-voiceover-toggle[data-state="buffering"] { animation: none; }
 }
 
+.video-voiceover-fullscreen {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: 8px;
+  padding: 7px 14px;
+  border-radius: 999px;
+  border: 1px solid rgba(29, 36, 64, 0.2);
+  background: rgba(29, 36, 64, 0.05);
+  color: #1d2440;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.video-voiceover-fullscreen::before {
+  content: "\26F6";
+  font-size: 13px;
+  line-height: 1;
+}
+
+.video-voiceover-fullscreen:hover { border-color: #2243d6; }
+
+/* The card's own fullscreen (js/video-voiceover.js). The whole card goes
+   fullscreen — not the player — so the player stays the muted inline one the
+   dub is synced to, and the toggle stays on screen under the picture. The
+   same rules pin the card over the viewport where element fullscreen does
+   not exist (iPhone). */
+.video-card.is-fullscreen {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 100000;
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  margin: 0;
+  border: 0;
+  border-radius: 0;
+  background: #000;
+  transform: none;
+  box-shadow: none;
+}
+
+.video-card.is-fullscreen .video-card-frame {
+  flex: 1 1 auto;
+  min-height: 0;
+  aspect-ratio: auto;
+  background: #000;
+}
+
+.video-card.is-fullscreen .video-card-body {
+  flex: 0 0 auto;
+  padding: 10px 16px calc(12px + env(safe-area-inset-bottom, 0px));
+  background: #000;
+}
+
+.video-card.is-fullscreen .video-card-body > :not(.video-voiceover) { display: none; }
+.video-card.is-fullscreen .video-voiceover { margin-top: 0; }
+.video-card.is-fullscreen .video-voiceover-fullscreen,
+.video-card.is-fullscreen .video-voiceover-status { color: #fff; }
+.video-card.is-fullscreen .video-voiceover-fullscreen,
+.video-card.is-fullscreen .video-voiceover-toggle:not([data-mode="voiceover"]) {
+  color: #fff;
+  border-color: rgba(255, 255, 255, 0.35);
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.video-card.is-fullscreen .video-voiceover-fullscreen::before { content: "\2715"; }
+
+html.video-fullscreen-lock,
+html.video-fullscreen-lock body { overflow: hidden; }
+
 .video-voiceover-status {
   display: block;
   margin-top: 6px;
@@ -366,7 +441,8 @@
   .video-grid { grid-template-columns: 1fr; }
   /* A mis-tap here restarts playback and re-fetches the audio, so give the
      toggle a full-thumb target on a phone. */
-  .video-voiceover-toggle { padding: 11px 18px; font-size: 13.5px; }
+  .video-voiceover-toggle,
+  .video-voiceover-fullscreen { padding: 11px 18px; font-size: 13.5px; }
 }
 
 /* ---------------------------------------------------------------

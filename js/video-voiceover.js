@@ -46,6 +46,12 @@
       so unmuting there doubled the dub with the original track. The tick
       now restarts a dub that was stopped from outside and keeps the video
       muted while the dub is on, and a fullscreen change resyncs at once.
+      Even so, on a phone the player's fullscreen is its own player that the
+      page cannot mute, and the original came back over the dub. So a card
+      with a voice-over hides the player's fullscreen button (fs=0, set in
+      js/video-data.js) and offers its own, which puts the whole card —
+      same muted player, toggle included — in fullscreen. iPhone has no
+      element fullscreen, so there the card is pinned over the viewport.
 
   Waits for the same "kiddo:rendered" event video-search.js uses, since cards
   are rendered from JSON after this script loads.
@@ -77,6 +83,8 @@
   var STATUS_BUFFERING = "Дуу ачаалж байна…";
   var STATUS_UNAVAILABLE = "Дуу ачаалж чадсангүй — эх дуу тавигдлаа.";
   var STATUS_BLOCKED = "Дарж дууг эхлүүлнэ үү.";
+  var LABEL_FULLSCREEN = "Бүтэн дэлгэц";
+  var LABEL_EXIT_FULLSCREEN = "Гарах";
 
   var entries = [];
 
@@ -144,15 +152,6 @@
     if (entry.clockTime === null) return null;
     if (!entry.videoPlaying) return entry.clockTime;
     return entry.clockTime + (now() - entry.clockAt) / 1000;
-  }
-
-  function videoMuted(entry) {
-    if (!entry.player || typeof entry.player.isMuted !== "function") return null;
-    try {
-      return entry.player.isMuted();
-    } catch (e) {
-      return null;
-    }
   }
 
   function muteVideo(entry) {
@@ -412,11 +411,12 @@
 
     sampleClock(entry);
 
-    // In fullscreen the player's own controls are the only sound controls on
-    // screen, and unmuting there would talk over the dub. The card's toggle
-    // is the switch between the two; until it is flipped the video stays
-    // muted.
-    if (videoMuted(entry) === false) muteVideo(entry);
+    // The player's own volume control would otherwise talk over the dub. The
+    // card's toggle is the switch between the two; until it is flipped the
+    // video stays muted. Asserted every tick rather than checked first:
+    // isMuted() answers from the same late cache as getCurrentTime(), and a
+    // mute() that is already in effect costs nothing.
+    muteVideo(entry);
 
     // A stopped video needs no correction; the state handler has already
     // parked the audio next to it.
@@ -604,6 +604,9 @@
       holdSince: 0,
       lastSeekAt: 0,
       lastResumeAt: 0,
+      pseudoFullscreen: false,
+      card: wrap.closest ? wrap.closest(".video-card") : null,
+      fullscreenBtn: wrap.querySelector(".video-voiceover-fullscreen"),
       pendingSeek: null,
       warmed: false,
       unlocked: false,
@@ -612,6 +615,9 @@
       status: wrap.querySelector(".video-voiceover-status"),
     };
     entry.toggleLabel = entry.toggle.querySelector(".video-voiceover-toggle-label");
+    entry.fullscreenLabel = entry.fullscreenBtn
+      ? entry.fullscreenBtn.querySelector(".video-voiceover-fullscreen-label")
+      : null;
 
     bindAudio(entry);
 
@@ -632,6 +638,14 @@
       applyMode(entry, entry.mode === "original" ? "voiceover" : "original");
     });
 
+    if (entry.fullscreenBtn && entry.card) {
+      entry.fullscreenBtn.addEventListener("click", function () {
+        ensurePlayer(entry);
+        if (isFullscreen(entry)) exitFullscreen(entry);
+        else enterFullscreen(entry);
+      });
+    }
+
     observeForPlayer(entry);
 
     return entry;
@@ -639,6 +653,10 @@
 
   function teardown(entry) {
     stopSyncLoop(entry);
+    if (entry.pseudoFullscreen) {
+      entry.pseudoFullscreen = false;
+      renderFullscreen(entry);
+    }
     if (entry.observer) {
       entry.observer.disconnect();
       entry.observer = null;
@@ -668,12 +686,79 @@
     });
   }
 
+  /* ---------------------------------------------------------------
+     The card's own fullscreen
+  ------------------------------------------------------------------*/
+  function fullscreenElement() {
+    return document.fullscreenElement || document.webkitFullscreenElement || null;
+  }
+
+  function isFullscreen(entry) {
+    return entry.pseudoFullscreen || (!!entry.card && fullscreenElement() === entry.card);
+  }
+
+  function renderFullscreen(entry) {
+    if (!entry.fullscreenBtn) return;
+    var on = isFullscreen(entry);
+    if (entry.card) entry.card.classList.toggle("is-fullscreen", on);
+    entry.fullscreenBtn.setAttribute("aria-pressed", on ? "true" : "false");
+    entry.fullscreenLabel.textContent = on ? LABEL_EXIT_FULLSCREEN : LABEL_FULLSCREEN;
+    var anyPseudo = entries.some(function (e) { return e.pseudoFullscreen; });
+    document.documentElement.classList.toggle("video-fullscreen-lock", anyPseudo);
+  }
+
+  // iPhone exposes no element fullscreen at all, and a browser may refuse
+  // the request; either way the card is pinned over the viewport instead,
+  // which keeps the same inline player and the toggle within reach.
+  function enterFullscreen(entry) {
+    var card = entry.card;
+    var request = card.requestFullscreen || card.webkitRequestFullscreen;
+    var pseudo = function () {
+      entry.pseudoFullscreen = true;
+      renderFullscreen(entry);
+    };
+    if (!request) {
+      pseudo();
+      return;
+    }
+    try {
+      var p = request.call(card);
+      if (p && typeof p.catch === "function") p.catch(pseudo);
+    } catch (e) {
+      pseudo();
+    }
+  }
+
+  function exitFullscreen(entry) {
+    if (entry.pseudoFullscreen) {
+      entry.pseudoFullscreen = false;
+      renderFullscreen(entry);
+      onFullscreenChange();
+      return;
+    }
+    var exit = document.exitFullscreen || document.webkitExitFullscreen;
+    if (exit && fullscreenElement()) {
+      try {
+        var p = exit.call(document);
+        if (p && typeof p.catch === "function") p.catch(function () {});
+      } catch (e) { /* already out */ }
+    }
+  }
+
+  function onFullscreenKey(event) {
+    if (event.key !== "Escape" && event.key !== "Esc") return;
+    entries.forEach(function (entry) {
+      if (entry.pseudoFullscreen) exitFullscreen(entry);
+    });
+  }
+
   // Going in or out of fullscreen resizes the player, which on most
   // connections means a quality switch and a jump in its clock, and leaves
   // the dub wherever the transition found it. Resync once, straight away,
   // rather than wait for the loop to find the gap.
   function onFullscreenChange() {
     entries.forEach(function (entry) {
+      renderFullscreen(entry);
       if (entry.mode !== "voiceover") return;
       muteVideo(entry);
       anchorClock(entry);
@@ -693,6 +778,7 @@
   document.addEventListener("visibilitychange", onVisibilityChange);
   document.addEventListener("fullscreenchange", onFullscreenChange);
   document.addEventListener("webkitfullscreenchange", onFullscreenChange);
+  document.addEventListener("keydown", onFullscreenKey);
 
   // The drift maths is the part worth pinning down; exposing it keeps the
   // tuning testable without a live player and a live network.
