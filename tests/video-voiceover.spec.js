@@ -138,6 +138,7 @@ const FAKE_YT = () => {
       window.__players.push(rec);
       this.mute = () => { rec.muted = true; };
       this.unMute = () => { rec.muted = false; };
+      this.isMuted = () => rec.muted;
       this.getCurrentTime = () => rec.time;
       this.playVideo = () => { rec.state = 1; };
       this.pauseVideo = () => { rec.state = 2; };
@@ -148,13 +149,22 @@ const FAKE_YT = () => {
 
 async function stubEnvironment(page) {
   await page.addInitScript(FAKE_YT);
-  await page.route(/raw\.githubusercontent\.com/, (route) =>
-    route.fulfill({
-      status: 200,
-      headers: { 'content-type': 'audio/wav', 'access-control-allow-origin': '*' },
-      body: silentWav(),
-    })
-  );
+  // Range requests are answered so the element can actually seek — a plain
+  // 200 leaves every seek snapping back to the start.
+  const wav = silentWav();
+  await page.route(/raw\.githubusercontent\.com/, (route) => {
+    const headers = {
+      'content-type': 'audio/wav',
+      'access-control-allow-origin': '*',
+      'accept-ranges': 'bytes',
+    };
+    const range = /bytes=(\d+)-(\d*)/.exec(route.request().headers().range || '');
+    if (!range) return route.fulfill({ status: 200, headers, body: wav });
+    const start = Number(range[1]);
+    const end = range[2] ? Math.min(Number(range[2]), wav.length - 1) : wav.length - 1;
+    headers['content-range'] = `bytes ${start}-${end}/${wav.length}`;
+    return route.fulfill({ status: 206, headers, body: wav.subarray(start, end + 1) });
+  });
 }
 
 test.describe('voice-over sync on a slow connection', () => {
@@ -296,6 +306,59 @@ test.describe('voice-over sync on a slow connection', () => {
     await expect.poll(() => page.evaluate(() => window.__players[0].muted)).toBe(false);
     await expect.poll(() => audio.evaluate((a) => a.playbackRate)).toBe(1);
     await expect.poll(() => audio.evaluate((a) => a.paused)).toBe(true);
+  });
+
+  // On iOS the player's fullscreen is the system player, which interrupts the
+  // page's audio and never gives it back, while the video itself keeps
+  // PLAYING — so no state change ever arrives to restart the dub.
+  test('a dub stopped from outside while the video plays is picked back up', async ({ page }) => {
+    await stubEnvironment(page);
+    await page.goto('/channel-nutshell.html');
+    await page.waitForSelector('.video-card');
+
+    const audio = page.locator('.video-voiceover-audio').first();
+    await page.locator('.video-voiceover-toggle').first().click();
+    await page.evaluate(() => window.__players[0].fire(window.YT.PlayerState.PLAYING));
+    await expect.poll(() => audio.evaluate((a) => a.paused)).toBe(false);
+
+    await audio.evaluate((a) => a.pause());
+    await expect.poll(() => audio.evaluate((a) => a.paused), { timeout: 6000 }).toBe(false);
+  });
+
+  // In fullscreen the player's own volume control is the only one on screen;
+  // unmuting there must not leave the original talking over the dub.
+  test('the video stays muted while the dub is on', async ({ page }) => {
+    await stubEnvironment(page);
+    await page.goto('/channel-nutshell.html');
+    await page.waitForSelector('.video-card');
+
+    await page.locator('.video-voiceover-toggle').first().click();
+    await page.evaluate(() => window.__players[0].fire(window.YT.PlayerState.PLAYING));
+    await expect.poll(() => page.evaluate(() => window.__players[0].muted)).toBe(true);
+
+    await page.evaluate(() => { window.__players[0].muted = false; });
+    await expect.poll(() => page.evaluate(() => window.__players[0].muted)).toBe(true);
+  });
+
+  test('a fullscreen change resyncs the dub to the video at once', async ({ page }) => {
+    await stubEnvironment(page);
+    await page.goto('/channel-nutshell.html');
+    await page.waitForSelector('.video-card');
+
+    const audio = page.locator('.video-voiceover-audio').first();
+    await page.locator('.video-voiceover-toggle').first().click();
+    await page.evaluate(() => window.__players[0].fire(window.YT.PlayerState.PLAYING));
+    await expect.poll(() => audio.evaluate((a) => a.readyState)).toBeGreaterThan(0);
+
+    // The player jumps while it resizes and the dub was left behind.
+    await audio.evaluate((a) => a.pause());
+    await page.evaluate(() => {
+      window.__players[0].time = 5;
+      document.dispatchEvent(new Event('fullscreenchange'));
+    });
+
+    await expect.poll(() => audio.evaluate((a) => a.paused)).toBe(false);
+    await expect.poll(() => audio.evaluate((a) => a.currentTime)).toBeGreaterThanOrEqual(5);
   });
 
   test('no player is built for a card sitting below the fold', async ({ page }) => {

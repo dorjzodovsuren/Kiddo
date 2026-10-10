@@ -39,6 +39,13 @@
       unlocks it on the way down, before the click completes.
     * A background tab throttles timers, so drift builds silently; coming
       back re-anchors and resyncs once instead of fighting the throttle.
+    * Fullscreen is the player's, not the page's. On iOS the system player
+      it opens interrupts the page's <audio> and nothing restarts it on the
+      way out, so the dub stayed silent over a video that kept PLAYING; the
+      player's own controls are also the only sound controls left on screen,
+      so unmuting there doubled the dub with the original track. The tick
+      now restarts a dub that was stopped from outside and keeps the video
+      muted while the dub is on, and a fullscreen change resyncs at once.
 
   Waits for the same "kiddo:rendered" event video-search.js uses, since cards
   are rendered from JSON after this script loads.
@@ -55,6 +62,9 @@
   var MAX_RATE_TRIM = 0.06;
   // A seek on a phone is a range request; never fire them back to back.
   var SEEK_COOLDOWN_MS = 1500;
+  // How often a dub stopped from outside (a fullscreen system player, an
+  // audio interruption) may be restarted while the video keeps playing.
+  var RESUME_COOLDOWN_MS = 1500;
   var TICK_MS = 700;
   // How long the video waits on audio that is not arriving before the card
   // gives up and hands playback back to the original sound.
@@ -134,6 +144,15 @@
     if (entry.clockTime === null) return null;
     if (!entry.videoPlaying) return entry.clockTime;
     return entry.clockTime + (now() - entry.clockAt) / 1000;
+  }
+
+  function videoMuted(entry) {
+    if (!entry.player || typeof entry.player.isMuted !== "function") return null;
+    try {
+      return entry.player.isMuted();
+    } catch (e) {
+      return null;
+    }
   }
 
   function muteVideo(entry) {
@@ -393,17 +412,36 @@
 
     sampleClock(entry);
 
+    // In fullscreen the player's own controls are the only sound controls on
+    // screen, and unmuting there would talk over the dub. The card's toggle
+    // is the switch between the two; until it is flipped the video stays
+    // muted.
+    if (videoMuted(entry) === false) muteVideo(entry);
+
     // A stopped video needs no correction; the state handler has already
     // parked the audio next to it.
     if (!entry.videoPlaying) return;
-    if (entry.audio.paused || entry.audio.seeking) return;
-    if (entry.audio.readyState < 2) return;
 
     var v = videoTime(entry);
     if (v === null) return;
 
     var duration = audioDuration(entry);
     if (duration !== null && v >= duration) return; // dub is shorter than the video
+
+    // The video is playing and the dub is meant to be, but the audio is
+    // paused and nothing here paused it: iOS's fullscreen player (or a call,
+    // or another app) interrupted it, and no player event will follow to
+    // restart it. Pick it back up where the video is.
+    if (entry.audio.paused) {
+      if (now() - entry.lastResumeAt > RESUME_COOLDOWN_MS) {
+        entry.lastResumeAt = now();
+        syncAndPlayAudio(entry);
+      }
+      return;
+    }
+
+    if (entry.audio.seeking) return;
+    if (entry.audio.readyState < 2) return;
 
     var maySeek = now() - entry.lastSeekAt > SEEK_COOLDOWN_MS;
     var fix = correctionFor(entry.audio.currentTime, v, maySeek);
@@ -565,6 +603,7 @@
       holding: false,
       holdSince: 0,
       lastSeekAt: 0,
+      lastResumeAt: 0,
       pendingSeek: null,
       warmed: false,
       unlocked: false,
@@ -629,6 +668,22 @@
     });
   }
 
+  // Going in or out of fullscreen resizes the player, which on most
+  // connections means a quality switch and a jump in its clock, and leaves
+  // the dub wherever the transition found it. Resync once, straight away,
+  // rather than wait for the loop to find the gap.
+  function onFullscreenChange() {
+    entries.forEach(function (entry) {
+      if (entry.mode !== "voiceover") return;
+      muteVideo(entry);
+      anchorClock(entry);
+      entry.lastSeekAt = 0;
+      entry.lastResumeAt = 0;
+      if (entry.videoPlaying && !entry.holding) resumeAudio(entry);
+      startSyncLoop(entry);
+    });
+  }
+
   function boot() {
     entries.forEach(teardown);
     entries = [].slice.call(document.querySelectorAll(".video-voiceover")).map(buildEntry);
@@ -636,6 +691,8 @@
 
   document.addEventListener("kiddo:rendered", boot);
   document.addEventListener("visibilitychange", onVisibilityChange);
+  document.addEventListener("fullscreenchange", onFullscreenChange);
+  document.addEventListener("webkitfullscreenchange", onFullscreenChange);
 
   // The drift maths is the part worth pinning down; exposing it keeps the
   // tuning testable without a live player and a live network.
@@ -646,6 +703,7 @@
       hardTolerance: HARD_TOLERANCE,
       maxRateTrim: MAX_RATE_TRIM,
       seekCooldownMs: SEEK_COOLDOWN_MS,
+      resumeCooldownMs: RESUME_COOLDOWN_MS,
       tickMs: TICK_MS,
       stallLimitMs: STALL_LIMIT_MS,
       playerMargin: PLAYER_MARGIN,
