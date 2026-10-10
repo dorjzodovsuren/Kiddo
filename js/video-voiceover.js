@@ -52,6 +52,20 @@
       js/video-data.js) and offers its own, which puts the whole card —
       same muted player, toggle included — in fullscreen. iPhone has no
       element fullscreen, so there the card is pinned over the viewport.
+    * Streaming the dub was itself the main source of stops: every stall and
+      every correcting seek on a phone connection is a wait for bytes, and
+      each wait parked the video. The files are small (tens of KB to a
+      couple of MB), so the whole file is fetched once into memory and
+      played from there; streaming is only the fallback when that fails.
+    * A resume after the video buffered used to seek the dub every time,
+      and the seek's own wait for bytes paused the video again — a
+      stop/start loop. A resume now only seeks across a real gap, and a
+      "stalled" event with data in hand is ignored instead of pausing.
+    * The player's clock arrives in steps, so a single drift reading is
+      noisy; acting on each one changed playbackRate nearly every tick,
+      and on Android each change is an audible hiccup. Drift is now the
+      median of the last few readings, the rate moves in two fixed steps,
+      and once trimming starts it runs until the gap is properly closed.
 
   Waits for the same "kiddo:rendered" event video-search.js uses, since cards
   are rendered from JSON after this script loads.
@@ -60,7 +74,17 @@
   "use strict";
 
   // Gaps under this are left alone: chasing them costs more than it fixes.
-  var SOFT_TOLERANCE = 0.12;
+  // It sits above the jitter of the player's stepwise clock, or the loop
+  // would chase that jitter.
+  var SOFT_TOLERANCE = 0.2;
+  // Once a trim has started it runs until the gap is this small, so the rate
+  // does not flick on and off around the soft edge.
+  var SETTLE_TOLERANCE = 0.06;
+  // A resume within this of the video just plays on and lets the trim close
+  // the rest; only a bigger gap is worth a seek.
+  var RESUME_TOLERANCE = 0.35;
+  // How many drift readings the median is taken over.
+  var DRIFT_SAMPLES = 5;
   // Above this a seek is cheaper than waiting for a rate trim to close it.
   var HARD_TOLERANCE = 1.0;
   // How far playbackRate may bend, either way. 6% closes a half-second gap in
@@ -75,6 +99,9 @@
   // How long the video waits on audio that is not arriving before the card
   // gives up and hands playback back to the original sound.
   var STALL_LIMIT_MS = 8000;
+  // How long the video waits for the whole dub file before falling back to
+  // streaming it. Longer than a stall: a file still arriving is progress.
+  var FILE_LIMIT_MS = 15000;
   // Build the player this far ahead of the card scrolling into view.
   var PLAYER_MARGIN = "300px";
 
@@ -104,16 +131,26 @@
 
      drift > 0 means the audio is behind the video and has to speed up.
   ------------------------------------------------------------------*/
-  function correctionFor(audioTime, videoTime, maySeek) {
+  //
+  // trimming says a rate trim is already running; it then carries on down to
+  // SETTLE_TOLERANCE rather than stopping at the soft edge. The trim comes in
+  // two fixed steps instead of a continuous ramp, so a noisy reading does not
+  // change playbackRate — an audible hiccup on Android — on every tick.
+  function correctionFor(audioTime, videoTime, maySeek, trimming) {
     var drift = videoTime - audioTime;
     var gap = Math.abs(drift);
 
-    if (gap <= SOFT_TOLERANCE) return { seek: false, rate: 1 };
+    if (gap <= (trimming ? SETTLE_TOLERANCE : SOFT_TOLERANCE)) return { seek: false, rate: 1 };
     if (gap > HARD_TOLERANCE && maySeek) return { seek: true, rate: 1 };
 
-    var span = HARD_TOLERANCE - SOFT_TOLERANCE;
-    var trim = Math.min(MAX_RATE_TRIM, ((gap - SOFT_TOLERANCE) / span) * MAX_RATE_TRIM);
+    var trim = gap < (SOFT_TOLERANCE + HARD_TOLERANCE) / 2 ? MAX_RATE_TRIM / 2 : MAX_RATE_TRIM;
     return { seek: false, rate: drift > 0 ? 1 + trim : 1 - trim };
+  }
+
+  function median(values) {
+    var sorted = values.slice().sort(function (a, b) { return a - b; });
+    var mid = sorted.length >> 1;
+    return sorted.length % 2 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2;
   }
 
   /* ---------------------------------------------------------------
@@ -145,6 +182,7 @@
 
   function anchorClock(entry) {
     entry.clockTime = null;
+    entry.drifts = [];
     sampleClock(entry);
   }
 
@@ -178,15 +216,61 @@
   // audio files nobody asked for. The moment a card looks like it will be
   // used — a finger on its toggle, or its video starting — that card's file
   // starts arriving, so the fetch is already in flight when it is needed.
+  //
+  // The whole file is fetched into memory rather than streamed: played from
+  // a blob the dub can neither stall nor wait on a seek, which on a phone
+  // connection is where the stops came from.
   function warmAudio(entry) {
-    if (entry.warmed) return;
-    entry.warmed = true;
+    if (entry.fileState !== "idle") return;
+    if (!window.fetch || !window.URL || typeof window.URL.createObjectURL !== "function") {
+      streamAudio(entry);
+      return;
+    }
+    entry.fileState = "loading";
+    entry.fileSince = now();
+    entry.fileAbort = typeof window.AbortController === "function" ? new window.AbortController() : null;
+
+    window.fetch(entry.sourceUrl, entry.fileAbort ? { signal: entry.fileAbort.signal } : undefined)
+      .then(function (response) {
+        if (!response.ok) throw new Error("HTTP " + response.status);
+        return response.blob();
+      })
+      .then(function (blob) {
+        if (entry.fileState !== "loading") return; // fell back or torn down meanwhile
+        entry.fileUrl = window.URL.createObjectURL(blob);
+        entry.fileState = "ready";
+        entry.audio.preload = "auto";
+        entry.audio.src = entry.fileUrl;
+        entry.audio.load();
+        audioArrived(entry);
+      })
+      .catch(function () {
+        if (entry.fileState !== "loading") return;
+        streamAudio(entry);
+        audioArrived(entry);
+      });
+  }
+
+  // The fallback: let the element stream the url itself, as it always could.
+  function streamAudio(entry) {
+    if (entry.fileAbort) {
+      try { entry.fileAbort.abort(); } catch (e) { /* already settled */ }
+      entry.fileAbort = null;
+    }
+    entry.fileState = "stream";
     try {
       entry.audio.preload = "auto";
       entry.audio.load();
     } catch (e) {
-      entry.warmed = false;
+      // The element reports its own errors through the "error" event.
     }
+  }
+
+  // The dub has something to play now; pick up wherever the card left off.
+  function audioArrived(entry) {
+    if (entry.mode !== "voiceover") return;
+    if (entry.holding) releaseHold(entry, true);
+    else if (entry.videoPlaying) resumeAudio(entry);
   }
 
   // iOS will not start an <audio> element from a player event; it has to have
@@ -200,15 +284,16 @@
   function unlockAudio(entry) {
     if (entry.unlocked) return;
     entry.unlocked = true;
-    var wanted = entry.mode === "voiceover";
-    if (!wanted) {
+    if (entry.mode !== "voiceover") {
       var at = videoTime(entry);
       if (at !== null) seekAudio(entry, at);
     }
     var p = entry.audio.play();
     if (p && typeof p.then === "function") {
       p.then(function () {
-        if (!wanted && entry.mode !== "voiceover") entry.audio.pause();
+        // While the file is still arriving the real play has not happened
+        // yet, so this one must not run on as a stream.
+        if (entry.mode !== "voiceover" || entry.fileState === "loading") entry.audio.pause();
       }).catch(function () {
         // Nothing to recover here: the real play() below reports failures.
       });
@@ -249,6 +334,12 @@
   }
 
   function playAudio(entry) {
+    // Nothing to play until the file is here; the video waits with it.
+    if (entry.fileState === "loading" || entry.fileState === "idle") {
+      warmAudio(entry);
+      holdForAudio(entry);
+      return;
+    }
     var p = entry.audio.play();
     if (!p || typeof p.catch !== "function") return;
     p.catch(function (err) {
@@ -264,9 +355,16 @@
     });
   }
 
+  // A resume close to the video plays straight on and leaves the rest to the
+  // trim. Seeking on every resume is what made each video buffer a stop: the
+  // seek waited for bytes, which parked the video, which buffered again.
   function syncAndPlayAudio(entry) {
     var t = videoTime(entry);
-    seekAudio(entry, t === null ? 0 : t);
+    if (t === null) t = 0;
+    if (entry.audio.readyState === 0 || Math.abs(entry.audio.currentTime - t) > RESUME_TOLERANCE) {
+      seekAudio(entry, t);
+    }
+    entry.drifts = [];
     playAudio(entry);
   }
 
@@ -405,6 +503,20 @@
     }
 
     if (entry.holding) {
+      if (entry.fileState === "loading") {
+        // A slow connection: stop waiting for the whole file and stream it.
+        if (now() - entry.fileSince > FILE_LIMIT_MS) {
+          streamAudio(entry);
+          releaseHold(entry, true);
+        }
+        return;
+      }
+      // The data is there after all — a "stalled" that was not one, or a
+      // "playing" that never came. Waiting on it would only stop the video.
+      if (entry.audio.readyState >= 3 && !entry.audio.seeking) {
+        releaseHold(entry, true);
+        return;
+      }
       if (now() - entry.holdSince > STALL_LIMIT_MS) giveUpOnAudio(entry);
       return;
     }
@@ -443,11 +555,19 @@
     if (entry.audio.seeking) return;
     if (entry.audio.readyState < 2) return;
 
+    // One reading of the player's stepwise clock is noisy; act on the
+    // median of the last few instead.
+    entry.drifts.push(v - entry.audio.currentTime);
+    if (entry.drifts.length > DRIFT_SAMPLES) entry.drifts.shift();
+    var drift = median(entry.drifts);
+
     var maySeek = now() - entry.lastSeekAt > SEEK_COOLDOWN_MS;
-    var fix = correctionFor(entry.audio.currentTime, v, maySeek);
+    var fix = correctionFor(v - drift, v, maySeek, entry.audio.playbackRate !== 1);
 
     if (fix.seek) {
+      entry.audio.playbackRate = 1;
       seekAudio(entry, v);
+      entry.drifts = [];
     } else if (Math.abs(entry.audio.playbackRate - fix.rate) > 0.001) {
       entry.audio.playbackRate = fix.rate;
     }
@@ -579,7 +699,12 @@
     });
 
     audio.addEventListener("waiting", function () { holdForAudio(entry); });
-    audio.addEventListener("stalled", function () { holdForAudio(entry); });
+    // Browsers fire "stalled" when the download pauses, including when it
+    // pauses because enough is already buffered. Only a real lack of data
+    // is worth stopping the video for.
+    audio.addEventListener("stalled", function () {
+      if (audio.readyState < 3) holdForAudio(entry);
+    });
     audio.addEventListener("playing", function () { releaseHold(entry, true); });
     audio.addEventListener("canplaythrough", function () { releaseHold(entry, true); });
     audio.addEventListener("error", function () {
@@ -608,13 +733,18 @@
       card: wrap.closest ? wrap.closest(".video-card") : null,
       fullscreenBtn: wrap.querySelector(".video-voiceover-fullscreen"),
       pendingSeek: null,
-      warmed: false,
+      drifts: [],
+      fileState: "idle",
+      fileSince: 0,
+      fileAbort: null,
+      fileUrl: null,
       unlocked: false,
       toggle: wrap.querySelector(".video-voiceover-toggle"),
       audio: wrap.querySelector(".video-voiceover-audio"),
       status: wrap.querySelector(".video-voiceover-status"),
     };
     entry.toggleLabel = entry.toggle.querySelector(".video-voiceover-toggle-label");
+    entry.sourceUrl = entry.audio.currentSrc || entry.audio.src;
     entry.fullscreenLabel = entry.fullscreenBtn
       ? entry.fullscreenBtn.querySelector(".video-voiceover-fullscreen-label")
       : null;
@@ -653,6 +783,15 @@
 
   function teardown(entry) {
     stopSyncLoop(entry);
+    if (entry.fileAbort) {
+      try { entry.fileAbort.abort(); } catch (e) { /* already settled */ }
+    }
+    entry.fileState = "gone";
+    if (entry.fileUrl) {
+      entry.audio.pause();
+      window.URL.revokeObjectURL(entry.fileUrl);
+      entry.fileUrl = null;
+    }
     if (entry.pseudoFullscreen) {
       entry.pseudoFullscreen = false;
       renderFullscreen(entry);
@@ -787,6 +926,10 @@
     tuning: {
       softTolerance: SOFT_TOLERANCE,
       hardTolerance: HARD_TOLERANCE,
+      settleTolerance: SETTLE_TOLERANCE,
+      resumeTolerance: RESUME_TOLERANCE,
+      driftSamples: DRIFT_SAMPLES,
+      fileLimitMs: FILE_LIMIT_MS,
       maxRateTrim: MAX_RATE_TRIM,
       seekCooldownMs: SEEK_COOLDOWN_MS,
       resumeCooldownMs: RESUME_COOLDOWN_MS,

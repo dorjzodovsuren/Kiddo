@@ -425,6 +425,115 @@ test.describe('voice-over sync on a slow connection', () => {
     await expect(card).not.toHaveClass(/is-fullscreen/);
   });
 
+  // Streaming on a phone meant every stall and every correcting seek was a
+  // wait for bytes, and each wait stopped the video.
+  test('the dub is fetched once and played from memory', async ({ page }) => {
+    await stubEnvironment(page);
+    let mediaRequests = 0;
+    page.on('request', (r) => { if (/raw\.githubusercontent/.test(r.url())) mediaRequests++; });
+    await page.goto('/channel-nutshell.html');
+    await page.waitForSelector('.video-card');
+
+    const audio = page.locator('.video-voiceover-audio').first();
+    await page.locator('.video-voiceover-toggle').first().click();
+    await page.evaluate(() => window.__players[0].fire(window.YT.PlayerState.PLAYING));
+
+    await expect.poll(() => audio.evaluate((a) => a.src)).toMatch(/^blob:/);
+    await expect.poll(() => audio.evaluate((a) => a.paused)).toBe(false);
+    // Seeks within an in-memory file never go back to the network.
+    await page.evaluate(() => { window.__players[0].time = 6; });
+    await audio.evaluate((a) => { a.currentTime = 6; });
+    await audio.evaluate((a) => { a.currentTime = 2; });
+    const before = mediaRequests;
+    await page.waitForTimeout(500);
+    expect(mediaRequests).toBe(before);
+  });
+
+  test('the dub still streams when the whole-file fetch fails', async ({ page }) => {
+    await stubEnvironment(page);
+    // Only the fetch() fails; the element's own media request still works.
+    await page.route(/raw\.githubusercontent\.com/, (route) =>
+      route.request().resourceType() === 'fetch' ? route.abort() : route.fallback()
+    );
+    await page.goto('/channel-nutshell.html');
+    await page.waitForSelector('.video-card');
+
+    const audio = page.locator('.video-voiceover-audio').first();
+    const toggle = page.locator('.video-voiceover-toggle').first();
+    await toggle.click();
+    await page.evaluate(() => window.__players[0].fire(window.YT.PlayerState.PLAYING));
+
+    await expect.poll(() => audio.evaluate((a) => a.paused)).toBe(false);
+    expect(await audio.evaluate((a) => a.src)).toMatch(/^https:/);
+    await expect(toggle).toHaveAttribute('data-mode', 'voiceover');
+  });
+
+  // Seeking on every resume made each video buffer a stop: the seek waited
+  // for bytes, which parked the video, which buffered again.
+  test('a resume close to the video plays on without seeking', async ({ page }) => {
+    await stubEnvironment(page);
+    await page.goto('/channel-nutshell.html');
+    await page.waitForSelector('.video-card');
+
+    const audio = page.locator('.video-voiceover-audio').first();
+    await page.locator('.video-voiceover-toggle').first().click();
+    await page.evaluate(() => window.__players[0].fire(window.YT.PlayerState.PLAYING));
+    await expect.poll(() => audio.evaluate((a) => !a.paused && a.currentTime > 0.3)).toBe(true);
+
+    await page.evaluate(() => window.__players[0].fire(window.YT.PlayerState.BUFFERING));
+    await expect.poll(() => audio.evaluate((a) => a.paused)).toBe(true);
+
+    // The video stopped where the dub did.
+    await audio.evaluate((a) => {
+      window.__players[0].time = a.currentTime + 0.1;
+      window.__seeks = 0;
+      a.addEventListener('seeking', () => { window.__seeks++; });
+    });
+    await page.evaluate(() => window.__players[0].fire(window.YT.PlayerState.PLAYING));
+    await expect.poll(() => audio.evaluate((a) => a.paused)).toBe(false);
+    await page.waitForTimeout(300);
+    expect(await page.evaluate(() => window.__seeks)).toBe(0);
+  });
+
+  test('a "stalled" with data in hand does not stop the video', async ({ page }) => {
+    await stubEnvironment(page);
+    await page.goto('/channel-nutshell.html');
+    await page.waitForSelector('.video-card');
+
+    const audio = page.locator('.video-voiceover-audio').first();
+    const toggle = page.locator('.video-voiceover-toggle').first();
+    await toggle.click();
+    await page.evaluate(() => window.__players[0].fire(window.YT.PlayerState.PLAYING));
+    await expect.poll(() => audio.evaluate((a) => !a.paused && a.readyState >= 3)).toBe(true);
+
+    await audio.evaluate((a) => a.dispatchEvent(new Event('stalled')));
+    await page.waitForTimeout(200);
+    expect(await page.evaluate(() => window.__players[0].state)).toBe(1);
+    await expect(toggle).not.toHaveAttribute('data-state', 'buffering');
+  });
+
+  test('a running trim carries on until the gap is properly closed', async ({ page }) => {
+    await page.goto('/channel-nutshell.html');
+    await page.waitForSelector('.video-card');
+
+    const r = await page.evaluate(() => {
+      const c = window.KiddoVoiceover.correctionFor;
+      const t = window.KiddoVoiceover.tuning;
+      const between = (t.settleTolerance + t.softTolerance) / 2;
+      return {
+        idle: c(10, 10 + between, true, false),
+        running: c(10, 10 + between, true, true),
+        settled: c(10, 10 + t.settleTolerance / 2, true, true),
+        steps: [0.3, 0.4, 0.5, 0.7, 0.9].map((g) => c(10, 10 + g, false, false).rate),
+      };
+    });
+    expect(r.idle.rate).toBe(1); // not worth starting for
+    expect(r.running.rate).toBeGreaterThan(1); // but worth finishing
+    expect(r.settled.rate).toBe(1);
+    // Two fixed steps, not a continuous ramp a noisy reading would wobble.
+    expect(new Set(r.steps).size).toBeLessThanOrEqual(2);
+  });
+
   test('no player is built for a card sitting below the fold', async ({ page }) => {
     await stubEnvironment(page);
     const viewport = { width: 390, height: 600 }; // a phone
