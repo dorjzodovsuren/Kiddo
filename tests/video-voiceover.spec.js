@@ -167,6 +167,17 @@ async function stubEnvironment(page) {
   });
 }
 
+// The dub on card i, whichever engine plays it: the Web Audio track
+// normally, the <audio> element when the fetch or the decode failed. It is
+// looked up afresh each time because the engine changes once the file lands.
+async function onDub(page, fn, i = 0) {
+  const handle = await page.evaluateHandle((n) => window.KiddoVoiceover.audioFor(n), i);
+  return handle.evaluate(fn);
+}
+const dubOf = (page, i = 0) => ({ evaluate: (fn) => onDub(page, fn, i) });
+const inspect = (page, i = 0) => page.evaluate((n) => window.KiddoVoiceover.inspect(n), i);
+const engineOf = async (page, i = 0) => (await inspect(page, i)).engine;
+
 test.describe('voice-over sync on a slow connection', () => {
   test('the embed asks for inline playback so iOS cannot take the audio away', async ({ page }) => {
     await page.goto('/channel-nutshell.html');
@@ -245,20 +256,20 @@ test.describe('voice-over sync on a slow connection', () => {
 
     await page.evaluate(() => window.__players[0].fire(window.YT.PlayerState.PLAYING));
     await expect
-      .poll(() => page.locator('.video-voiceover-audio').first().evaluate((a) => a.paused))
+      .poll(() => onDub(page, (a) => a.paused))
       .toBe(false);
 
     // The video stalls for bytes: the dub has to stall with it, or the two
     // slide apart for as long as the stall lasts.
     await page.evaluate(() => window.__players[0].fire(window.YT.PlayerState.BUFFERING));
     await expect
-      .poll(() => page.locator('.video-voiceover-audio').first().evaluate((a) => a.paused))
+      .poll(() => onDub(page, (a) => a.paused))
       .toBe(true);
 
     // And picks back up together.
     await page.evaluate(() => window.__players[0].fire(window.YT.PlayerState.PLAYING));
     await expect
-      .poll(() => page.locator('.video-voiceover-audio').first().evaluate((a) => a.paused))
+      .poll(() => onDub(page, (a) => a.paused))
       .toBe(false);
   });
 
@@ -284,7 +295,7 @@ test.describe('voice-over sync on a slow connection', () => {
     await expect(toggles.nth(1)).toHaveAttribute('data-mode', 'voiceover');
     await expect(toggles.nth(0)).toHaveAttribute('data-mode', 'original');
     await expect
-      .poll(() => page.locator('.video-voiceover-audio').nth(0).evaluate((a) => a.paused))
+      .poll(() => onDub(page, (a) => a.paused, 0))
       .toBe(true);
   });
 
@@ -294,12 +305,11 @@ test.describe('voice-over sync on a slow connection', () => {
     await page.waitForSelector('.video-card');
 
     const toggle = page.locator('.video-voiceover-toggle').first();
-    const audio = page.locator('.video-voiceover-audio').first();
+    const audio = dubOf(page);
 
     await toggle.click();
-    await page.evaluate(() => {
-      document.querySelector('.video-voiceover-audio').playbackRate = 1.05;
-    });
+    await expect.poll(() => engineOf(page)).toBe('webaudio');
+    await audio.evaluate((a) => { a.playbackRate = 1.05; });
 
     await toggle.click();
     await expect(toggle).toHaveAttribute('data-mode', 'original');
@@ -316,7 +326,7 @@ test.describe('voice-over sync on a slow connection', () => {
     await page.goto('/channel-nutshell.html');
     await page.waitForSelector('.video-card');
 
-    const audio = page.locator('.video-voiceover-audio').first();
+    const audio = dubOf(page);
     await page.locator('.video-voiceover-toggle').first().click();
     await page.evaluate(() => window.__players[0].fire(window.YT.PlayerState.PLAYING));
     await expect.poll(() => audio.evaluate((a) => a.paused)).toBe(false);
@@ -345,10 +355,10 @@ test.describe('voice-over sync on a slow connection', () => {
     await page.goto('/channel-nutshell.html');
     await page.waitForSelector('.video-card');
 
-    const audio = page.locator('.video-voiceover-audio').first();
+    const audio = dubOf(page);
     await page.locator('.video-voiceover-toggle').first().click();
     await page.evaluate(() => window.__players[0].fire(window.YT.PlayerState.PLAYING));
-    await expect.poll(() => audio.evaluate((a) => a.readyState)).toBeGreaterThan(0);
+    await expect.poll(() => engineOf(page)).toBe('webaudio');
 
     // The player jumps while it resizes and the dub was left behind.
     await audio.evaluate((a) => a.pause());
@@ -434,11 +444,11 @@ test.describe('voice-over sync on a slow connection', () => {
     await page.goto('/channel-nutshell.html');
     await page.waitForSelector('.video-card');
 
-    const audio = page.locator('.video-voiceover-audio').first();
+    const audio = dubOf(page);
     await page.locator('.video-voiceover-toggle').first().click();
     await page.evaluate(() => window.__players[0].fire(window.YT.PlayerState.PLAYING));
 
-    await expect.poll(() => audio.evaluate((a) => a.src)).toMatch(/^blob:/);
+    await expect.poll(() => engineOf(page)).toBe('webaudio');
     await expect.poll(() => audio.evaluate((a) => a.paused)).toBe(false);
     // Seeks within an in-memory file never go back to the network.
     await page.evaluate(() => { window.__players[0].time = 6; });
@@ -458,12 +468,13 @@ test.describe('voice-over sync on a slow connection', () => {
     await page.goto('/channel-nutshell.html');
     await page.waitForSelector('.video-card');
 
-    const audio = page.locator('.video-voiceover-audio').first();
+    const audio = dubOf(page);
     const toggle = page.locator('.video-voiceover-toggle').first();
     await toggle.click();
     await page.evaluate(() => window.__players[0].fire(window.YT.PlayerState.PLAYING));
 
     await expect.poll(() => audio.evaluate((a) => a.paused)).toBe(false);
+    expect(await engineOf(page)).toBe('element');
     expect(await audio.evaluate((a) => a.src)).toMatch(/^https:/);
     await expect(toggle).toHaveAttribute('data-mode', 'voiceover');
   });
@@ -475,7 +486,7 @@ test.describe('voice-over sync on a slow connection', () => {
     await page.goto('/channel-nutshell.html');
     await page.waitForSelector('.video-card');
 
-    const audio = page.locator('.video-voiceover-audio').first();
+    const audio = dubOf(page);
     await page.locator('.video-voiceover-toggle').first().click();
     await page.evaluate(() => window.__players[0].fire(window.YT.PlayerState.PLAYING));
     await expect.poll(() => audio.evaluate((a) => !a.paused && a.currentTime > 0.3)).toBe(true);
@@ -484,15 +495,12 @@ test.describe('voice-over sync on a slow connection', () => {
     await expect.poll(() => audio.evaluate((a) => a.paused)).toBe(true);
 
     // The video stopped where the dub did.
-    await audio.evaluate((a) => {
-      window.__players[0].time = a.currentTime + 0.1;
-      window.__seeks = 0;
-      a.addEventListener('seeking', () => { window.__seeks++; });
-    });
+    await audio.evaluate((a) => { window.__players[0].time = a.currentTime + 0.1; });
+    const seeksBefore = (await inspect(page)).seeks;
     await page.evaluate(() => window.__players[0].fire(window.YT.PlayerState.PLAYING));
     await expect.poll(() => audio.evaluate((a) => a.paused)).toBe(false);
     await page.waitForTimeout(300);
-    expect(await page.evaluate(() => window.__seeks)).toBe(0);
+    expect((await inspect(page)).seeks).toBe(seeksBefore);
   });
 
   test('a "stalled" with data in hand does not stop the video', async ({ page }) => {
@@ -500,16 +508,74 @@ test.describe('voice-over sync on a slow connection', () => {
     await page.goto('/channel-nutshell.html');
     await page.waitForSelector('.video-card');
 
-    const audio = page.locator('.video-voiceover-audio').first();
+    const audio = dubOf(page);
     const toggle = page.locator('.video-voiceover-toggle').first();
     await toggle.click();
     await page.evaluate(() => window.__players[0].fire(window.YT.PlayerState.PLAYING));
     await expect.poll(() => audio.evaluate((a) => !a.paused && a.readyState >= 3)).toBe(true);
 
-    await audio.evaluate((a) => a.dispatchEvent(new Event('stalled')));
+    // Fired at the element, which sits idle once Web Audio has the dub.
+    await page.locator('.video-voiceover-audio').first()
+      .evaluate((a) => a.dispatchEvent(new Event('stalled')));
     await page.waitForTimeout(200);
     expect(await page.evaluate(() => window.__players[0].state)).toBe(1);
     await expect(toggle).not.toHaveAttribute('data-state', 'buffering');
+  });
+
+  // An <audio> element on a phone turns every pause, play, seek and rate
+  // change into a trip through the platform media pipeline: an audible gap
+  // and a delay before sound comes back. Web Audio does each one instantly.
+  test('the dub plays through Web Audio, decoded once', async ({ page }) => {
+    await stubEnvironment(page);
+    await page.goto('/channel-nutshell.html');
+    await page.waitForSelector('.video-card');
+
+    await page.locator('.video-voiceover-toggle').first().click();
+    await page.evaluate(() => window.__players[0].fire(window.YT.PlayerState.PLAYING));
+
+    await expect.poll(() => inspect(page)).toMatchObject({
+      engine: 'webaudio',
+      paused: false,
+      context: 'running',
+    });
+    // The element never streams alongside it.
+    expect(await page.locator('.video-voiceover-audio').first().evaluate((a) => a.paused)).toBe(true);
+  });
+
+  // What is heard trails what the engine plays by the device's output delay
+  // (worst on Bluetooth); the dub must run ahead by that much to line up.
+  test('the dub runs ahead of the output latency so it is heard in sync', async ({ page }) => {
+    await stubEnvironment(page);
+    await page.addInitScript(() => {
+      Object.defineProperty(AudioContext.prototype, 'outputLatency', { get: () => 0.25 });
+    });
+    await page.goto('/channel-nutshell.html');
+    await page.waitForSelector('.video-card');
+
+    await page.locator('.video-voiceover-toggle').first().click();
+    await page.evaluate(() => {
+      window.__players[0].time = 3;
+      window.__players[0].fire(window.YT.PlayerState.PLAYING);
+    });
+    await expect.poll(() => inspect(page)).toMatchObject({ engine: 'webaudio', paused: false });
+
+    const lead = await onDub(page, (a) => a.sourcePosition() - a.currentTime);
+    expect(lead).toBeCloseTo(0.25, 2);
+  });
+
+  // iOS suspends Web Audio for a call, Siri or another app's sound.
+  test('a suspended audio context is woken while the video plays', async ({ page }) => {
+    await stubEnvironment(page);
+    await page.goto('/channel-nutshell.html');
+    await page.waitForSelector('.video-card');
+
+    await page.locator('.video-voiceover-toggle').first().click();
+    await page.evaluate(() => window.__players[0].fire(window.YT.PlayerState.PLAYING));
+    await expect.poll(() => inspect(page)).toMatchObject({ engine: 'webaudio', context: 'running' });
+
+    await page.evaluate(() => window.KiddoVoiceover.context().suspend());
+    await expect.poll(() => inspect(page).then((s) => s.context), { timeout: 4000 }).toBe('running');
+    await expect(page.locator('.video-voiceover-toggle').first()).toHaveAttribute('data-mode', 'voiceover');
   });
 
   test('a running trim carries on until the gap is properly closed', async ({ page }) => {

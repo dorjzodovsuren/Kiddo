@@ -66,6 +66,16 @@
       and on Android each change is an audible hiccup. Drift is now the
       median of the last few readings, the rate moves in two fixed steps,
       and once trimming starts it runs until the gap is properly closed.
+    * Even played from memory, an <audio> element on a phone stops and lags:
+      every pause, play, seek and rate change goes through the platform
+      media pipeline, which on Android and iOS is an audible gap and a
+      fraction of a second before sound comes out again, and its clock knows
+      nothing about the output delay (worst on Bluetooth). So the dub is now
+      decoded once and played through Web Audio (BufferTrack below): start,
+      stop and seek are instant and sample-accurate, each one fades over a
+      few milliseconds instead of clicking, and its clock subtracts the
+      output latency so what is heard lines up with what is seen. The
+      <audio> element is only the fallback where Web Audio cannot decode.
 
   Waits for the same "kiddo:rendered" event video-search.js uses, since cards
   are rendered from JSON after this script loads.
@@ -102,6 +112,9 @@
   // How long the video waits for the whole dub file before falling back to
   // streaming it. Longer than a stall: a file still arriving is progress.
   var FILE_LIMIT_MS = 15000;
+  // How long a suspended Web Audio context may stay down under a playing
+  // video before the card hands back the original sound and asks for a tap.
+  var CONTEXT_LIMIT_MS = 3000;
   // Build the player this far ahead of the card scrolling into view.
   var PLAYER_MARGIN = "300px";
 
@@ -114,6 +127,189 @@
   var LABEL_EXIT_FULLSCREEN = "Гарах";
 
   var entries = [];
+
+  /* ---------------------------------------------------------------
+     Web Audio engine
+
+     BufferTrack plays a decoded dub and answers the small part of the
+     HTMLMediaElement interface this file uses (paused, currentTime,
+     duration, readyState, seeking, playbackRate, play(), pause()), so the
+     sync logic below drives it exactly as it drives the <audio> fallback.
+
+     currentTime is the position being *heard*: the source runs ahead of it
+     by the output latency, so a dub synced on currentTime lines up with
+     the picture rather than trailing it by the device's audio delay.
+  ------------------------------------------------------------------*/
+  // Every start, stop and jump fades over this long instead of clicking.
+  var FADE_S = 0.015;
+  var sharedContext = null;
+
+  function audioContext() {
+    if (sharedContext) return sharedContext;
+    var Ctor = window.AudioContext || window.webkitAudioContext;
+    if (!Ctor) return null;
+    try {
+      sharedContext = new Ctor();
+    } catch (e) {
+      return null;
+    }
+    // iOS silences Web Audio with the ringer switch unless the page says it
+    // is playing media, which the YouTube player next to it always is.
+    try {
+      if (window.navigator.audioSession) window.navigator.audioSession.type = "playback";
+    } catch (e) { /* older Safari: the switch applies */ }
+    return sharedContext;
+  }
+
+  // Safe to call any time; only works for real inside a gesture or once the
+  // page has had one, which the toggle provides.
+  function wakeContext() {
+    var ctx = sharedContext;
+    if (!ctx || ctx.state === "running" || typeof ctx.resume !== "function") return;
+    try {
+      var p = ctx.resume();
+      if (p && typeof p.catch === "function") p.catch(function () {});
+    } catch (e) { /* the tick tries again */ }
+  }
+
+  // Older Safari only has the callback form, newer browsers return a promise.
+  function decodeAudio(ctx, data) {
+    return new Promise(function (resolve, reject) {
+      try {
+        var p = ctx.decodeAudioData(data, resolve, reject);
+        if (p && typeof p.then === "function") p.then(resolve, reject);
+      } catch (e) {
+        reject(e);
+      }
+    });
+  }
+
+  function BufferTrack(ctx, buffer, onEnded) {
+    this.ctx = ctx;
+    this.buffer = buffer;
+    this.onEnded = onEnded;
+    this.duration = buffer.duration;
+    this.readyState = 4;
+    this.seeking = false;
+    this.paused = true;
+    this.ended = false;
+    this.rate = 1;
+    this.hold = 0; // heard position to resume from while paused
+    this.base = 0; // source position at startedAt while playing
+    this.startedAt = 0;
+    this.node = null;
+  }
+
+  BufferTrack.prototype.latency = function () {
+    var l = this.ctx.outputLatency || this.ctx.baseLatency || 0;
+    return Math.min(Math.max(l, 0), 0.5);
+  };
+
+  BufferTrack.prototype.sourcePosition = function () {
+    return this.base + (this.ctx.currentTime - this.startedAt) * this.rate;
+  };
+
+  BufferTrack.prototype.startAt = function (at) {
+    var ctx = this.ctx;
+    var t0 = ctx.currentTime;
+    var gain = ctx.createGain();
+    gain.gain.setValueAtTime(0, t0);
+    gain.gain.linearRampToValueAtTime(1, t0 + FADE_S);
+    gain.connect(ctx.destination);
+
+    var source = ctx.createBufferSource();
+    source.buffer = this.buffer;
+    source.playbackRate.value = this.rate;
+    source.connect(gain);
+
+    var self = this;
+    var node = { source: source, gain: gain };
+    source.onended = function () {
+      if (self.node !== node) return; // stopped or replaced on purpose
+      self.node = null;
+      self.paused = true;
+      self.ended = true;
+      self.hold = self.duration;
+      if (self.onEnded) self.onEnded();
+    };
+
+    at = Math.max(0, Math.min(at, this.duration));
+    source.start(t0, at);
+    this.node = node;
+    this.base = at;
+    this.startedAt = t0;
+  };
+
+  BufferTrack.prototype.stopNode = function () {
+    var node = this.node;
+    if (!node) return;
+    this.node = null;
+    var t0 = this.ctx.currentTime;
+    try {
+      var g = node.gain.gain;
+      g.cancelScheduledValues(t0);
+      g.setValueAtTime(g.value, t0);
+      g.linearRampToValueAtTime(0, t0 + FADE_S);
+      node.source.stop(t0 + FADE_S + 0.005);
+    } catch (e) {
+      try { node.source.stop(); } catch (e2) { /* already stopped */ }
+    }
+  };
+
+  BufferTrack.prototype.play = function () {
+    wakeContext();
+    if (this.paused && this.hold < this.duration) {
+      this.paused = false;
+      this.ended = false;
+      this.startAt(this.hold + this.latency());
+    }
+    return Promise.resolve();
+  };
+
+  BufferTrack.prototype.pause = function () {
+    if (this.paused) return;
+    this.hold = this.currentTime;
+    this.paused = true;
+    this.stopNode();
+  };
+
+  BufferTrack.prototype.load = function () {};
+
+  BufferTrack.prototype.destroy = function () {
+    this.pause();
+    this.buffer = null;
+  };
+
+  Object.defineProperty(BufferTrack.prototype, "currentTime", {
+    get: function () {
+      if (this.paused || !this.node) return this.hold;
+      var heard = this.sourcePosition() - this.latency();
+      return Math.max(0, Math.min(heard, this.duration));
+    },
+    set: function (t) {
+      t = Math.max(0, Math.min(t, this.duration));
+      if (this.paused || !this.node) {
+        this.hold = t;
+        return;
+      }
+      // A jump while playing: the old sound fades out as the new one fades
+      // in, so a correction is a few milliseconds of blend, not a gap.
+      this.stopNode();
+      this.startAt(t + this.latency());
+    },
+  });
+
+  Object.defineProperty(BufferTrack.prototype, "playbackRate", {
+    get: function () { return this.rate; },
+    set: function (r) {
+      if (this.node) {
+        this.base = this.sourcePosition();
+        this.startedAt = this.ctx.currentTime;
+        this.node.source.playbackRate.setValueAtTime(r, this.startedAt);
+      }
+      this.rate = r;
+    },
+  });
 
   function now() {
     return window.performance && window.performance.now
@@ -230,18 +426,40 @@
     entry.fileSince = now();
     entry.fileAbort = typeof window.AbortController === "function" ? new window.AbortController() : null;
 
+    var type = "audio/mpeg";
     window.fetch(entry.sourceUrl, entry.fileAbort ? { signal: entry.fileAbort.signal } : undefined)
       .then(function (response) {
         if (!response.ok) throw new Error("HTTP " + response.status);
-        return response.blob();
+        type = response.headers.get("content-type") || type;
+        return response.arrayBuffer();
       })
-      .then(function (blob) {
-        if (entry.fileState !== "loading") return; // fell back or torn down meanwhile
-        entry.fileUrl = window.URL.createObjectURL(blob);
-        entry.fileState = "ready";
-        entry.audio.preload = "auto";
-        entry.audio.src = entry.fileUrl;
-        entry.audio.load();
+      .then(function (data) {
+        if (entry.fileState !== "loading") return null;
+        var ctx = audioContext();
+        if (!ctx) return { data: data, buffer: null };
+        // decodeAudioData takes ownership of what it is given; keep a copy
+        // for the <audio> fallback in case the decode fails.
+        var copy = data.slice(0);
+        return decodeAudio(ctx, data).then(
+          function (buffer) { return { data: copy, buffer: buffer }; },
+          function () { return { data: copy, buffer: null }; }
+        );
+      })
+      .then(function (result) {
+        if (!result || entry.fileState !== "loading") return; // fell back or torn down meanwhile
+        if (result.buffer) {
+          entry.track = new BufferTrack(audioContext(), result.buffer, function () {
+            stopSyncLoop(entry);
+          });
+          entry.audio = entry.track;
+          entry.fileState = "ready";
+        } else {
+          entry.fileUrl = window.URL.createObjectURL(new window.Blob([result.data], { type: type }));
+          entry.fileState = "blob";
+          entry.element.preload = "auto";
+          entry.element.src = entry.fileUrl;
+          entry.element.load();
+        }
         audioArrived(entry);
       })
       .catch(function () {
@@ -259,8 +477,8 @@
     }
     entry.fileState = "stream";
     try {
-      entry.audio.preload = "auto";
-      entry.audio.load();
+      entry.element.preload = "auto";
+      entry.element.load();
     } catch (e) {
       // The element reports its own errors through the "error" event.
     }
@@ -282,6 +500,13 @@
   // preload="none" nothing is buffered yet, so this both avoids a blip of the
   // opening line and starts fetching the part of the file about to be played.
   function unlockAudio(entry) {
+    // Web Audio only has to be resumed inside a gesture, and a tap on the
+    // toggle is one — every time, so a context iOS interrupted comes back.
+    if (audioContext()) {
+      wakeContext();
+      // The element is only needed if the decode fails and it takes over.
+      if (entry.fileState !== "blob" && entry.fileState !== "stream") return;
+    }
     if (entry.unlocked) return;
     entry.unlocked = true;
     if (entry.mode !== "voiceover") {
@@ -320,6 +545,7 @@
     }
 
     entry.lastSeekAt = now();
+    entry.seekCount++;
     if (entry.audio.readyState === 0) {
       entry.pendingSeek = target;
       warmAudio(entry);
@@ -521,6 +747,25 @@
       return;
     }
 
+    // iOS suspends Web Audio for a call, Siri, or another app's sound, and
+    // will not always let it resume without a tap. Try quietly; if it stays
+    // down while the video plays, say so rather than leave a silent card.
+    if (entry.track && entry.track.ctx.state !== "running") {
+      wakeContext();
+      if (!entry.videoPlaying || entry.audio.paused) {
+        entry.suspendedSince = 0;
+      } else if (!entry.suspendedSince) {
+        entry.suspendedSince = now();
+      } else if (now() - entry.suspendedSince > CONTEXT_LIMIT_MS) {
+        entry.suspendedSince = 0;
+        applyMode(entry, "original");
+        setStatus(entry, STATUS_BLOCKED);
+        return;
+      }
+    } else {
+      entry.suspendedSince = 0;
+    }
+
     sampleClock(entry);
 
     // The player's own volume control would otherwise talk over the dub. The
@@ -683,34 +928,41 @@
      Wiring
   ------------------------------------------------------------------*/
   function bindAudio(entry) {
-    var audio = entry.audio;
+    var audio = entry.element;
+    // Once Web Audio has the dub the element sits idle; nothing it reports
+    // may move the card.
+    function own(fn) {
+      return function () {
+        if (entry.audio === audio) fn();
+      };
+    }
 
     // A few percent of rate trim on speech is only inaudible with the pitch
     // held; without this the correction would sound like a chipmunk.
     audio.preservesPitch = true;
     if ("webkitPreservesPitch" in audio) audio.webkitPreservesPitch = true;
 
-    audio.addEventListener("loadedmetadata", function () {
+    audio.addEventListener("loadedmetadata", own(function () {
       if (entry.pendingSeek !== null) {
         var target = entry.pendingSeek;
         entry.pendingSeek = null;
         seekAudio(entry, target);
       }
-    });
+    }));
 
-    audio.addEventListener("waiting", function () { holdForAudio(entry); });
+    audio.addEventListener("waiting", own(function () { holdForAudio(entry); }));
     // Browsers fire "stalled" when the download pauses, including when it
     // pauses because enough is already buffered. Only a real lack of data
     // is worth stopping the video for.
-    audio.addEventListener("stalled", function () {
+    audio.addEventListener("stalled", own(function () {
       if (audio.readyState < 3) holdForAudio(entry);
-    });
-    audio.addEventListener("playing", function () { releaseHold(entry, true); });
-    audio.addEventListener("canplaythrough", function () { releaseHold(entry, true); });
-    audio.addEventListener("error", function () {
+    }));
+    audio.addEventListener("playing", own(function () { releaseHold(entry, true); }));
+    audio.addEventListener("canplaythrough", own(function () { releaseHold(entry, true); }));
+    audio.addEventListener("error", own(function () {
       if (entry.mode === "voiceover") giveUpOnAudio(entry);
-    });
-    audio.addEventListener("ended", function () { stopSyncLoop(entry); });
+    }));
+    audio.addEventListener("ended", own(function () { stopSyncLoop(entry); }));
   }
 
   function buildEntry(wrap) {
@@ -739,12 +991,16 @@
       fileAbort: null,
       fileUrl: null,
       unlocked: false,
+      track: null,
+      suspendedSince: 0,
+      seekCount: 0,
       toggle: wrap.querySelector(".video-voiceover-toggle"),
-      audio: wrap.querySelector(".video-voiceover-audio"),
+      element: wrap.querySelector(".video-voiceover-audio"),
       status: wrap.querySelector(".video-voiceover-status"),
     };
+    entry.audio = entry.element;
     entry.toggleLabel = entry.toggle.querySelector(".video-voiceover-toggle-label");
-    entry.sourceUrl = entry.audio.currentSrc || entry.audio.src;
+    entry.sourceUrl = entry.element.currentSrc || entry.element.src;
     entry.fullscreenLabel = entry.fullscreenBtn
       ? entry.fullscreenBtn.querySelector(".video-voiceover-fullscreen-label")
       : null;
@@ -787,8 +1043,12 @@
       try { entry.fileAbort.abort(); } catch (e) { /* already settled */ }
     }
     entry.fileState = "gone";
+    if (entry.track) {
+      entry.track.destroy();
+      entry.track = null;
+    }
     if (entry.fileUrl) {
-      entry.audio.pause();
+      entry.element.pause();
       window.URL.revokeObjectURL(entry.fileUrl);
       entry.fileUrl = null;
     }
@@ -923,6 +1183,25 @@
   // tuning testable without a live player and a live network.
   window.KiddoVoiceover = {
     correctionFor: correctionFor,
+    // What a card is playing through and where, for the specs: the Web Audio
+    // engine has no element to inspect.
+    inspect: function (index) {
+      var entry = entries[index];
+      if (!entry) return null;
+      return {
+        engine: entry.track ? "webaudio" : "element",
+        fileState: entry.fileState,
+        paused: entry.audio.paused,
+        currentTime: entry.audio.currentTime,
+        playbackRate: entry.audio.playbackRate,
+        seeks: entry.seekCount,
+        context: sharedContext ? sharedContext.state : null,
+      };
+    },
+    audioFor: function (index) {
+      return entries[index] ? entries[index].audio : null;
+    },
+    context: function () { return sharedContext; },
     tuning: {
       softTolerance: SOFT_TOLERANCE,
       hardTolerance: HARD_TOLERANCE,
@@ -930,6 +1209,7 @@
       resumeTolerance: RESUME_TOLERANCE,
       driftSamples: DRIFT_SAMPLES,
       fileLimitMs: FILE_LIMIT_MS,
+      contextLimitMs: CONTEXT_LIMIT_MS,
       maxRateTrim: MAX_RATE_TRIM,
       seekCooldownMs: SEEK_COOLDOWN_MS,
       resumeCooldownMs: RESUME_COOLDOWN_MS,
