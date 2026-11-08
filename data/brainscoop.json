@@ -21,6 +21,20 @@
       "voiceover": "https://raw.githubusercontent.com/dorjzodovsuren/MongolianTTS/main/audio/1_edge_tts.mp3"
     },
     {
+      "id": "thebrainscoop30",
+      "youtube": "Sb1_j9A25nQ",
+      "url": "https://www.youtube.com/embed/Sb1_j9A25nQ",
+      "published": null,
+      "title": "Why Apple Seems Confused",
+      "heading": "Үлгэрийн цаг",
+      "summary": "Байгалийн түүхийн музейд зочид үзэж буй үзмэрүүд нь цуглуулгын өчүүхэн хэсэг нь юм. Хөшигний ард нь сая сая олдвор хадгалагдаж, судлаачид тэдгээрийг ангилан, тэмдэглэн, судалсаар байдаг. Энэхүү бичлэгээс музейн ажилтнууд олдвор бүрийг хэрхэн хадгалж, судалдаг, мөн тэдгээр нь байгалийн түүхийг ойлгоход яагаад чухал болохыг харуулна.",
+      "questions": [
+        "Музейн агуулахад юу нуугдаж байдаг вэ?",
+        "Олдворуудыг хэрхэн хадгалдаг вэ?"
+      ],
+      "voiceover": "https://raw.githubusercontent.com/dorjzodovsuren/MongolianTTS/main/audio/30_edge_tts.mp3"
+    },
+    {
       "id": "thebrainscoop2",
       "youtube": "-TTyyY3VWh8",
       "url": "https://www.youtube.com/embed/-TTyyY3VWh8",
